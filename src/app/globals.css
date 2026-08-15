@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #faf6ec;
+  --paper-dark: #f0e9d8;
+  --ink: #2a2118;
+  --brown: #7a5230;
+  --brown-dark: #5a3b22;
+  --seal: #a4241f;
+  --seal-bg: #fbe9e7;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-dark: var(--paper-dark);
+  --color-ink: var(--ink);
+  --color-brown: var(--brown);
+  --color-brown-dark: var(--brown-dark);
+  --color-seal: var(--seal);
+  --color-seal-bg: var(--seal-bg);
+  --font-serif-vn: var(--font-noto-serif);
+  --font-mono-vn: var(--font-space-mono);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.doc-preview {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.stamp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1.5px solid var(--seal);
+  color: var(--seal);
+  background: var(--seal-bg);
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transform: rotate(-1.5deg);
+}

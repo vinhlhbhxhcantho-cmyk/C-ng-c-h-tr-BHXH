@@ -1,0 +1,95 @@
+// Prisma schema — BHXH PRO
+// Xem đặc tả mục 2 (Kiến trúc dữ liệu chính)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 2.1. Đơn vị (Unit) — mỗi Unit là một khách hàng của đại lý
+model Unit {
+  id String @id @default(cuid())
+
+  // Mã đơn vị do cơ quan BHXH cấp — có thể chưa có ở luồng "đăng ký lần đầu"
+  maDonVi String? @unique
+
+  tenDonVi         String
+  mst              String
+  diaChiTruSo      String?
+  diaChiLienHe     String?
+  email            String?
+  dienThoai        String?
+  nguoiDaiDien     String?
+  soDinhDanhCaNhan String?
+  loaiHinhDonVi    String?
+  nganhKinhTe      String?
+  noiDangKyBHXH    String? // mã BHXH cơ sở, xem data/bhxh-offices.json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants  Participant[]
+  ledgerEntries LedgerEntry[]
+
+  @@index([mst])
+}
+
+// 2.2. Người tham gia (Participant) — danh sách làm việc hiện hành của 1 Unit
+// (Khi "chốt kỳ" sẽ được snapshot đầy đủ vào LedgerEntry.participantsJson)
+model Participant {
+  id     String @id @default(cuid())
+  unitId String
+  unit   Unit   @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  hoTen           String
+  gioiTinh        String // Nam | Nữ
+  ngaySinh        DateTime?
+  cccd            String?
+  nhom            String // TZ | Q6 | KQ | CZ
+  chucDanh        String
+  tienLuong       Float
+  phuCap          Float     @default(0)
+  tuThang         String // "MM/YYYY"
+  ngayHDLDHieuLuc DateTime?
+  noiDangKyKCB    String?
+  loaiBienDong    String // TM | GH | DC | CD
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([unitId])
+}
+
+// 2.3. Bản ghi Sổ theo dõi — snapshot đầy đủ của 1 kỳ đã "chốt"
+model LedgerEntry {
+  id     String @id @default(cuid())
+  unitId String
+  unit   Unit   @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  maDonVi String // sao chép tại thời điểm lưu, để hiển thị dù Unit đổi mã sau này
+  tenDonVi String
+
+  loaiKy   String // Tháng | Quý | Năm
+  giaTriKy String // "08/2026", "Q3/2026", "2026"
+  savedAt  DateTime @default(now())
+
+  soLaoDong      Int
+  tongQuyLuong   Float
+  soLuotTangMoi  Int
+  soLuotGiam     Int
+  participantsJson String // JSON.stringify(Participant[]) — snapshot đầy đủ
+
+  @@index([unitId])
+  @@index([giaTriKy])
+}
+
+// Tham số chính sách — KHÔNG hard-code trong logic, lưu dạng cấu hình chỉnh sửa được
+model PolicyConfig {
+  id        String   @id @default("current")
+  json      String // JSON blob, xem src/lib/policy.ts cho shape
+  updatedAt DateTime @updatedAt
+}
