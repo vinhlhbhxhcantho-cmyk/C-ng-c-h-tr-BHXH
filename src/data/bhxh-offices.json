@@ -1,0 +1,20 @@
+[
+  { "code": "9200", "name": "Văn phòng BHXH thành phố" },
+  { "code": "9203", "name": "BHXH Cơ sở Bình Thủy" },
+  { "code": "9204", "name": "BHXH Cơ sở Hưng Phú" },
+  { "code": "9205", "name": "BHXH Cơ sở Thốt Nốt" },
+  { "code": "9206", "name": "BHXH Cơ sở Vĩnh Thạnh" },
+  { "code": "9209", "name": "BHXH Cơ sở Thới Lai" },
+  { "code": "9300", "name": "BHXH Cơ sở Vị Tân" },
+  { "code": "9308", "name": "BHXH Cơ sở Long Mỹ" },
+  { "code": "9302", "name": "BHXH Cơ sở Tân Hòa" },
+  { "code": "9307", "name": "BHXH Cơ sở Ngã Bảy" },
+  { "code": "9304", "name": "BHXH Cơ sở Hiệp Hưng" },
+  { "code": "9400", "name": "BHXH Cơ sở Phú Lợi" },
+  { "code": "9410", "name": "BHXH Cơ sở Phú Tâm" },
+  { "code": "9402", "name": "BHXH Cơ sở Kế Sách" },
+  { "code": "9406", "name": "BHXH Cơ sở Mỹ Tú" },
+  { "code": "9407", "name": "BHXH Cơ sở Ngã Năm" },
+  { "code": "9409", "name": "BHXH Cơ sở Vĩnh Châu" },
+  { "code": "9411", "name": "BHXH Cơ sở Trần Đề" }
+]

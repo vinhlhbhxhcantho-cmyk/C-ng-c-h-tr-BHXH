@@ -1,0 +1,36 @@
+{
+  "hieuLucTu": "2026-01-01",
+  "canCu": "Nghị định 161/2026/NĐ-CP (mức lương cơ sở); vùng lương tối thiểu hiệu lực 01/01/2026; tỷ lệ đóng theo Điều 33 Luật BHXH 2024",
+  "mucThamChieu": 2530000,
+  "luongToiThieuVung": {
+    "1": 5310000,
+    "2": 4730000,
+    "3": 4140000,
+    "4": 3700000
+  },
+  "luongToiThieuVungGio": {
+    "1": 25500,
+    "2": 22700,
+    "3": 20000,
+    "4": 17800
+  },
+  "vungMacDinh": 1,
+  "boiSoTranBHXH_BHYT": 20,
+  "boiSoTranBHTN": 20,
+  "tyLe": {
+    "TZ_CZ": {
+      "oDauThaiSan": { "nld": 0, "donVi": 0.03 },
+      "huuTriTuTuat": { "nld": 0.08, "donVi": 0.14 },
+      "bhyt": { "nld": 0.015, "donVi": 0.03 },
+      "bhtn": { "nld": 0.01, "donVi": 0.01 },
+      "tnldBnn": { "nld": 0, "donVi": 0.005 }
+    },
+    "Q6_KQ": {
+      "oDauThaiSan": { "nld": 0.03, "donVi": 0 },
+      "huuTriTuTuat": { "nld": 0.22, "donVi": 0 },
+      "bhyt": { "nld": 0.045, "donVi": 0 },
+      "bhtn": { "nld": 0, "donVi": 0 },
+      "tnldBnn": { "nld": 0, "donVi": 0 }
+    }
+  }
+}
