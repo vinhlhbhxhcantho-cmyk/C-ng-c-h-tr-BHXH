@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Nền tảng đa khách hàng (multi-tenant): mỗi Agency là một đại lý dịch vụ
+// thuế - BHXH mua/thuê phần mềm. Mọi dữ liệu nghiệp vụ đều thuộc về một
+// Agency (agencyId) để đảm bảo cô lập dữ liệu giữa các đại lý.
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  SUPER_ADMIN // Quản trị nền tảng (nhà cung cấp phần mềm)
+  AGENCY_ADMIN // Quản trị đại lý
+  AGENCY_STAFF // Nhân viên đại lý
+}
+
+model Agency {
+  id        String   @id @default(cuid())
+  name      String
+  taxCode   String?  @unique
+  phone     String?
+  email     String?
+  address   String?
+  status    AgencyStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users  User[]
+  units  Unit[]
+
+  @@map("agencies")
+}
+
+enum AgencyStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  agencyId     String?
+  agency       Agency?  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         UserRole @default(AGENCY_STAFF)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  declarationsCreated Declaration[] @relation("DeclarationCreatedBy")
+
+  @@index([agencyId])
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+// Đơn vị sử dụng lao động (khách hàng của đại lý) tham gia BHXH
+model Unit {
+  id             String   @id @default(cuid())
+  agencyId       String
+  agency         Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  code           String? // Mã đơn vị do cơ quan BHXH cấp
+  name           String
+  taxCode        String? // Mã số thuế
+  address        String?
+  bhxhOfficeName String? // Cơ quan BHXH quản lý đơn vị
+  contactName    String?
+  contactPhone   String?
+  status         UnitStatus @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employees          Employee[]
+  declarations       Declaration[]
+  contributionPeriods ContributionPeriod[]
+
+  @@unique([agencyId, taxCode])
+  @@index([agencyId])
+  @@map("units")
+}
+
+enum UnitStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// Người lao động thuộc một đơn vị
+model Employee {
+  id             String   @id @default(cuid())
+  unitId         String
+  unit           Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  fullName       String
+  idNumber       String? // Số CCCD
+  socialInsuranceNo String? // Mã số BHXH
+  dateOfBirth    DateTime?
+  gender         Gender?
+  position       String? // Chức danh / công việc
+  salaryBase     Decimal? @db.Decimal(14, 0) // Mức tiền lương làm căn cứ đóng
+  startDate      DateTime? // Ngày bắt đầu tham gia tại đơn vị
+  status         EmployeeStatus @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  declarationItems DeclarationItem[]
+
+  @@index([unitId])
+  @@map("employees")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum EmployeeStatus {
+  ACTIVE // Đang tham gia BHXH
+  STOPPED // Đã báo giảm
+}
+
+// Hồ sơ báo tăng / báo giảm / điều chỉnh (tương ứng nghiệp vụ 600, mẫu D02-LT, TK1-TS...)
+model Declaration {
+  id            String   @id @default(cuid())
+  unitId        String
+  unit          Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  createdById   String
+  createdBy     User     @relation("DeclarationCreatedBy", fields: [createdById], references: [id])
+  type          DeclarationType
+  formCode      String   // Ví dụ: D02-LT, TK1-TS, 600
+  period        String   // Kỳ áp dụng, định dạng YYYY-MM
+  status        DeclarationStatus @default(DRAFT)
+  note          String?
+
+  // Thông tin liên quan tới bước nộp hồ sơ điện tử (giai đoạn 2, qua I-VAN)
+  submittedAt        DateTime?
+  ivanProvider        String?
+  ivanReferenceCode   String?
+  ivanResponseMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items DeclarationItem[]
+
+  @@index([unitId])
+  @@index([status])
+  @@map("declarations")
+}
+
+enum DeclarationType {
+  INCREASE // Báo tăng
+  DECREASE // Báo giảm
+  ADJUST   // Điều chỉnh mức đóng / thông tin
+}
+
+enum DeclarationStatus {
+  DRAFT     // Đang soạn
+  READY     // Sẵn sàng nộp
+  SUBMITTED // Đã gửi qua I-VAN
+  ACCEPTED  // Cơ quan BHXH chấp nhận
+  REJECTED  // Bị từ chối, cần chỉnh sửa
+}
+
+// Từng dòng lao động trong một hồ sơ báo tăng/giảm/điều chỉnh
+model DeclarationItem {
+  id            String   @id @default(cuid())
+  declarationId String
+  declaration   Declaration @relation(fields: [declarationId], references: [id], onDelete: Cascade)
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id])
+  effectiveDate DateTime // Ngày hiệu lực tăng/giảm/điều chỉnh
+  salaryBase    Decimal? @db.Decimal(14, 0)
+  reason        String?  // Lý do (nghỉ việc, thai sản, tăng mới...)
+  note          String?
+
+  @@index([declarationId])
+  @@map("declaration_items")
+}
+
+// Kỳ đóng BHXH của một đơn vị, dùng để đối chiếu tiền đóng
+model ContributionPeriod {
+  id           String   @id @default(cuid())
+  unitId       String
+  unit         Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  period       String   // YYYY-MM
+  employeeCount Int     @default(0)
+  amountDue    Decimal  @default(0) @db.Decimal(14, 0)
+  amountPaid   Decimal  @default(0) @db.Decimal(14, 0)
+  status       ContributionStatus @default(UNPAID)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  payments Payment[]
+
+  @@unique([unitId, period])
+  @@index([unitId])
+  @@map("contribution_periods")
+}
+
+enum ContributionStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+model Payment {
+  id                   String   @id @default(cuid())
+  contributionPeriodId String
+  contributionPeriod   ContributionPeriod @relation(fields: [contributionPeriodId], references: [id], onDelete: Cascade)
+  amount               Decimal  @db.Decimal(14, 0)
+  paidAt               DateTime
+  method               String?  // Chuyển khoản, tiền mặt...
+  note                 String?
+  createdAt            DateTime @default(now())
+
+  @@index([contributionPeriodId])
+  @@map("payments")
+}
