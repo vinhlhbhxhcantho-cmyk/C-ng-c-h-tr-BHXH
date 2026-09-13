@@ -1,0 +1,24 @@
+# Blueprint triển khai 1-click lên Render.com (gói miễn phí).
+# Xem hướng dẫn trong README.md, mục "Deploy nhanh lên Render.com".
+services:
+  - type: web
+    name: bhxh-tra-cuu
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bhxh-tra-cuu-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_TOKEN_TTL_SECONDS
+        value: "43200"
+
+databases:
+  - name: bhxh-tra-cuu-db
+    plan: free
+    databaseName: bhxh_pro
+    user: bhxh_pro

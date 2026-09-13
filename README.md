@@ -78,6 +78,33 @@ Nếu đã có backend/database chung cho các module khác của BHXH PRO, nên
 `import_logs` không trùng tên với các module khác) thay vì dựng hệ thống
 riêng.
 
+#### Deploy nhanh lên Render.com (miễn phí, để dùng thử)
+
+Repo đã có sẵn `render.yaml` để deploy 1 lần bấm (Render tự tạo cả web
+service lẫn database PostgreSQL):
+
+1. Vào <https://dashboard.render.com/select-repo?type=blueprint>, đăng nhập
+   (có thể dùng tài khoản GitHub), rồi chọn repo
+   `vinhlhbhxhcantho-cmyk/C-ng-c-h-tr-BHXH` và nhánh
+   `claude/bhxh-lookup-payment-module-nki74h` (hoặc `main` sau khi đã merge).
+2. Render đọc file `render.yaml`, hiện sẵn 1 web service (`bhxh-tra-cuu`) và
+   1 database (`bhxh-tra-cuu-db`) — bấm **Apply** để tạo.
+3. Đợi build xong (vài phút), mở tab **Shell** của service `bhxh-tra-cuu`,
+   chạy lần lượt:
+   ```bash
+   npm run migrate
+   npm run create-admin -- <ten_dang_nhap> <mat_khau> "Họ tên của bạn"
+   ```
+   (Chạy trực tiếp trong Shell của Render để mật khẩu không cần gửi cho ai
+   khác, kể cả Claude.)
+4. Mở địa chỉ web Render cấp cho service (dạng
+   `https://bhxh-tra-cuu-xxxx.onrender.com`) — trang `/` là tra cứu công
+   khai, `/admin.html` là trang quản trị, đăng nhập bằng tài khoản vừa tạo.
+
+Lưu ý: gói database miễn phí của Render tự xoá sau khoảng 30 ngày không
+nâng cấp — chỉ phù hợp để dùng thử, khi triển khai chính thức nên nâng lên
+gói trả phí hoặc trỏ vào database chung của BHXH PRO như trên.
+
 ### Việc còn cần xác nhận thêm (theo đặc tả)
 
 - Đối chiếu thêm công thức "Số kỳ này"/"Số đầu kỳ" trên số lượng lớn đơn vị
