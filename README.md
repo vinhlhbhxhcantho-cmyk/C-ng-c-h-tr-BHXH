@@ -82,5 +82,6 @@ riêng.
 
 - Đối chiếu thêm công thức "Số kỳ này"/"Số đầu kỳ" trên số lượng lớn đơn vị
   (mới kiểm chứng 3 đơn vị thật với TST).
-- Xác nhận cấu trúc nội dung chuyển khoản `+BHXH+103+00+<mã đơn vị>+09200+dong
-  BHXH` — "103" và "00" có cố định cho mọi đơn vị/phường hay không.
+
+Đã xác nhận: nội dung chuyển khoản `+BHXH+103+00+<mã đơn vị>+09200+dong BHXH`
+— "103" và "00" cố định cho mọi đơn vị, chỉ thay phần mã đơn vị.
