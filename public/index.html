@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tra cứu số tiền BHXH cần đóng</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Tra cứu số tiền BHXH/BHYT/BHTN cần đóng</h1>
+    <p class="subtitle">Dành cho doanh nghiệp / hộ kinh doanh tự tra cứu theo mã đơn vị</p>
+  </header>
+
+  <main class="container">
+    <section class="card" id="form-card">
+      <form id="lookup-form">
+        <div class="field">
+          <label for="ky">Kỳ (tháng)</label>
+          <select id="ky" name="ky" required></select>
+        </div>
+        <div class="field">
+          <label for="maDonVi">Mã đơn vị</label>
+          <input type="text" id="maDonVi" name="maDonVi" placeholder="Ví dụ: YN0054Z" required autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="email">Email chuyên quản</label>
+          <input type="email" id="email" name="email" placeholder="email đã đăng ký với đơn vị" required autocomplete="off" />
+        </div>
+        <button type="submit" id="submit-btn">Tra cứu</button>
+      </form>
+      <p id="error-msg" class="error" hidden></p>
+    </section>
+
+    <section class="card" id="result-card" hidden>
+      <h2 id="result-ten-don-vi"></h2>
+      <p class="muted" id="result-meta"></p>
+
+      <table class="result-table">
+        <tbody>
+          <tr><th>Mã đơn vị</th><td id="r-ma-don-vi"></td></tr>
+          <tr><th>Mã khối</th><td id="r-ma-khoi"></td></tr>
+          <tr><th>Số lao động</th><td id="r-so-lao-dong"></td></tr>
+          <tr><th>Số đầu kỳ</th><td id="r-so-dau-ky"></td></tr>
+          <tr><th>Số kỳ này</th><td id="r-so-ky-nay"></td></tr>
+          <tr><th>Số đã nộp</th><td id="r-so-da-nop"></td></tr>
+          <tr class="highlight"><th>Số cuối kỳ</th><td id="r-so-cuoi-ky"></td></tr>
+          <tr><th>Tháng hoàn thành nghĩa vụ</th><td id="r-thang-hoan-thanh"></td></tr>
+          <tr><th>Tỷ lệ nợ</th><td id="r-ty-le-no"></td></tr>
+        </tbody>
+      </table>
+
+      <div id="paid-up-note" class="notice notice-good" hidden>
+        Đơn vị không còn nợ trong kỳ này. Không cần lập lệnh chuyển khoản.
+      </div>
+
+      <div id="payment-section" hidden>
+        <h3>Thông tin chuyển khoản</h3>
+
+        <div class="field">
+          <label for="bank-select">Chọn tài khoản nhận</label>
+          <select id="bank-select"></select>
+        </div>
+
+        <div class="pay-info">
+          <div class="pay-row">
+            <span class="pay-label">Số tiền cần chuyển</span>
+            <span class="pay-value" id="pay-so-tien-hienthi"></span>
+            <button type="button" class="copy-btn" id="copy-so-tien" data-copy-target="pay-so-tien-raw">Chép số</button>
+            <span class="pay-value-raw" id="pay-so-tien-raw" hidden></span>
+          </div>
+          <div class="pay-row">
+            <span class="pay-label">Tên tài khoản thụ hưởng</span>
+            <span class="pay-value" id="pay-ten-tk"></span>
+            <button type="button" class="copy-btn" id="copy-ten-tk" data-copy-target="pay-ten-tk">Chép</button>
+          </div>
+          <div class="pay-row">
+            <span class="pay-label">Số tài khoản / Ngân hàng</span>
+            <span class="pay-value" id="pay-so-tk"></span>
+            <button type="button" class="copy-btn" id="copy-so-tk" data-copy-target="pay-so-tk">Chép</button>
+          </div>
+          <div class="pay-row">
+            <span class="pay-label">Nội dung chuyển khoản</span>
+            <span class="pay-value" id="pay-noi-dung"></span>
+            <button type="button" class="copy-btn" id="copy-noi-dung" data-copy-target="pay-noi-dung">Chép</button>
+          </div>
+        </div>
+
+        <div id="qr-section">
+          <img id="qr-image" alt="Mã QR chuyển khoản" />
+          <p class="muted">Quét mã QR bằng app ngân hàng, sau đó tự nhập số tiền cần chuyển.</p>
+        </div>
+        <div id="kho-bac-note" class="notice notice-warn" hidden>
+          Kho bạc Nhà nước không thuộc mạng lưới VietQR/NAPAS nên không tạo được mã QR.
+          Vui lòng chuyển khoản thủ công theo thông tin ở trên.
+        </div>
+
+        <p class="disclaimer">
+          Đây là công cụ hỗ trợ lập lệnh chuyển khoản. Việc ghi nhận đã nộp tiền vẫn theo
+          đối soát chính thức của cơ quan BHXH, không tự động qua công cụ này.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Số liệu được cán bộ BHXH cập nhật hàng tháng từ báo cáo C12. Nếu có sai lệch, vui lòng liên hệ chuyên quản phụ trách đơn vị.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quản trị nạp dữ liệu BHXH</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Quản trị nạp dữ liệu C12</h1>
+    <p class="subtitle">Dành cho chuyên quản BHXH — cần tài khoản đăng nhập</p>
+  </header>
+
+  <main class="container container-wide">
+    <section class="card" id="login-card">
+      <form id="login-form">
+        <div class="field">
+          <label for="username">Tên đăng nhập</label>
+          <input type="text" id="username" required autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="password">Mật khẩu</label>
+          <input type="password" id="password" required autocomplete="current-password" />
+        </div>
+        <button type="submit">Đăng nhập</button>
+      </form>
+      <p id="login-error" class="error" hidden></p>
+    </section>
+
+    <div id="admin-area" hidden>
+      <section class="card admin-header-card">
+        <div>
+          <strong id="welcome-name"></strong>
+          <span class="muted" id="welcome-username"></span>
+        </div>
+        <button type="button" id="logout-btn" class="secondary-btn">Đăng xuất</button>
+      </section>
+
+      <section class="card">
+        <h2>Nạp dữ liệu C12</h2>
+        <form id="import-form">
+          <div class="field">
+            <label for="ky-input">Kỳ (YYYYMM)</label>
+            <input type="text" id="ky-input" pattern="\d{6}" placeholder="Ví dụ: 202509" required />
+          </div>
+          <div class="field">
+            <label for="file-input">File C12 (.xlsx)</label>
+            <input type="file" id="file-input" accept=".xlsx" required />
+          </div>
+          <button type="submit" id="import-btn">Nạp dữ liệu</button>
+        </form>
+        <p id="import-error" class="error" hidden></p>
+        <p id="import-success" class="notice notice-good" hidden></p>
+      </section>
+
+      <section class="card">
+        <h2>Các kỳ đã có dữ liệu</h2>
+        <button type="button" id="refresh-ky-btn" class="secondary-btn">Tải lại</button>
+        <table class="admin-table" id="ky-table">
+          <thead><tr><th>Kỳ</th><th>Số đơn vị</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Đối chiếu đơn vị theo kỳ</h2>
+        <div class="filter-row">
+          <div class="field">
+            <label for="check-ky">Kỳ</label>
+            <input type="text" id="check-ky" pattern="\d{6}" placeholder="202509" />
+          </div>
+          <div class="field">
+            <label for="check-search">Tìm theo mã/tên đơn vị</label>
+            <input type="text" id="check-search" placeholder="Ví dụ: YN0054Z" />
+          </div>
+          <button type="button" id="check-btn">Xem</button>
+        </div>
+        <div class="table-scroll">
+          <table class="admin-table" id="donvi-table">
+            <thead>
+              <tr>
+                <th>Mã ĐV</th><th>Mã khối</th><th>Tên đơn vị</th><th>SLĐ</th>
+                <th>Đầu kỳ</th><th>Kỳ này</th><th>Đã nộp</th><th>Cuối kỳ</th>
+                <th>HT nghĩa vụ</th><th>Tỷ lệ nợ</th><th>Chuyên quản</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Nhật ký nạp dữ liệu</h2>
+        <button type="button" id="refresh-logs-btn" class="secondary-btn">Tải lại</button>
+        <div class="table-scroll">
+          <table class="admin-table" id="logs-table">
+            <thead>
+              <tr><th>Thời gian</th><th>Người nạp</th><th>Kỳ</th><th>File</th><th>Số dòng</th><th>Đã nạp</th><th>Bỏ qua</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

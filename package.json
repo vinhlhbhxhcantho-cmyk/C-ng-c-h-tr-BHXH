@@ -1,0 +1,44 @@
+{
+  "name": "c-ng-c-h-tr-bhxh",
+  "version": "1.0.0",
+  "description": "Công cụ hỗ trợ DN/HKD đăng ký tham gia Bắt buộc",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "create-admin": "node src/scripts/createAdmin.js",
+    "test": "node --test tests/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinhlhbhxhcantho-cmyk/C-ng-c-h-tr-BHXH.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vinhlhbhxhcantho-cmyk/C-ng-c-h-tr-BHXH/issues"
+  },
+  "homepage": "https://github.com/vinhlhbhxhcantho-cmyk/C-ng-c-h-tr-BHXH#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0",
+    "pg": "^8.23.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.1"
+  }
+}
