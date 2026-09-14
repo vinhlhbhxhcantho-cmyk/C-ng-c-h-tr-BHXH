@@ -13,6 +13,7 @@
   const errorMsg = document.getElementById('error-msg');
   const resultCard = document.getElementById('result-card');
   const bankSelect = document.getElementById('bank-select');
+  const soTienInput = document.getElementById('pay-so-tien-input');
 
   let currentResult = null;
 
@@ -79,16 +80,29 @@
     paidUpNote.hidden = true;
     paymentSection.hidden = false;
 
-    document.getElementById('pay-so-tien-hienthi').textContent = formatMoney(donVi.soCuoiKy);
-    document.getElementById('pay-so-tien-raw').textContent = String(Math.round(donVi.soCuoiKy));
+    soTienInput.value = Math.round(donVi.soCuoiKy);
     document.getElementById('pay-ten-tk').textContent = ACCOUNT_NAME;
 
+    syncSoTienDisplay();
     updateBankDetails(donVi);
+  }
+
+  function getSoTienDangNhap() {
+    const n = Number(soTienInput.value);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  }
+
+  function syncSoTienDisplay() {
+    const soTien = getSoTienDangNhap();
+    document.getElementById('pay-so-tien-raw').textContent = soTien !== null ? String(soTien) : '';
+    document.getElementById('pay-so-tien-hienthi').textContent =
+      soTien !== null ? `≈ ${formatMoney(soTien)}` : 'Vui lòng nhập số tiền hợp lệ.';
   }
 
   function updateBankDetails(donVi) {
     const bank = BANKS[Number(bankSelect.value)];
-    const noiDung = `+BHXH+103+00+${donVi.maDonVi}+09200+dong BHXH`;
+    const noiDung = `+BHXH+103+00+${donVi.maDonVi}+09200+dong BHXH;`;
+    const soTien = getSoTienDangNhap();
 
     document.getElementById('pay-so-tk').textContent = `${bank.account} (${bank.name})`;
     document.getElementById('pay-noi-dung').textContent = noiDung;
@@ -98,9 +112,12 @@
     const khoBacNote = document.getElementById('kho-bac-note');
 
     if (bank.bin) {
-      const url =
+      let url =
         `https://img.vietqr.io/image/${bank.bin}-${bank.account}-qr_only.png` +
         `?addInfo=${encodeURIComponent(noiDung)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+      if (soTien !== null) {
+        url += `&amount=${soTien}`;
+      }
       qrImage.src = url;
       qrSection.hidden = false;
       khoBacNote.hidden = true;
@@ -163,6 +180,11 @@
   });
 
   bankSelect.addEventListener('change', () => {
+    if (currentResult) updateBankDetails(currentResult);
+  });
+
+  soTienInput.addEventListener('input', () => {
+    syncSoTienDisplay();
     if (currentResult) updateBankDetails(currentResult);
   });
 
