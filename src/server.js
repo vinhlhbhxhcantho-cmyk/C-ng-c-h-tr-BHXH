@@ -12,6 +12,11 @@ const publicRoutes = require('./routes/public');
 
 const app = express();
 
+// Cần thiết khi chạy sau reverse proxy (Render, Fly.io, ...): để Express đọc
+// đúng IP thật của client từ header X-Forwarded-For, nếu không
+// express-rate-limit sẽ báo lỗi ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+app.set('trust proxy', 1);
+
 app.use(
   helmet({
     // Cho phép trang tĩnh tự host gọi VietQR image trực tiếp từ trình duyệt (thẻ <img>),

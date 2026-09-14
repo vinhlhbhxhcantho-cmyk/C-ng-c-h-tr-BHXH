@@ -1,3 +1,4 @@
+const { Readable } = require('stream');
 const ExcelJS = require('exceljs');
 
 // Ánh xạ tên trường nội bộ -> tên cột kỹ thuật trong file C12 (không phân biệt hoa/thường).
@@ -62,49 +63,22 @@ function normalizeYyyymm(value) {
   return text || null;
 }
 
-function findHeaderLocation(workbook) {
-  for (const worksheet of workbook.worksheets) {
-    const maxRow = Math.min(worksheet.rowCount || 0, MAX_HEADER_SCAN_ROWS);
-    for (let r = 1; r <= maxRow; r += 1) {
-      const row = worksheet.getRow(r);
-      let foundMaDvi = false;
-      const columnByHeader = {};
-      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-        const normalized = normalizeHeader(cellText(cell));
-        if (!normalized) return;
-        // Chỉ giữ lần xuất hiện đầu tiên của mỗi tên cột.
-        if (!(normalized in columnByHeader)) {
-          columnByHeader[normalized] = colNumber;
-        }
-        if (normalized === 'madvi') foundMaDvi = true;
-      });
-      if (foundMaDvi) {
-        return { worksheet, headerRowNumber: r, columnByHeader };
-      }
+function detectHeaderInRow(row) {
+  let foundMaDvi = false;
+  const columnByHeader = {};
+  row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+    const normalized = normalizeHeader(cellText(cell));
+    if (!normalized) return;
+    // Chỉ giữ lần xuất hiện đầu tiên của mỗi tên cột.
+    if (!(normalized in columnByHeader)) {
+      columnByHeader[normalized] = colNumber;
     }
-  }
-  return null;
+    if (normalized === 'madvi') foundMaDvi = true;
+  });
+  return foundMaDvi ? columnByHeader : null;
 }
 
-/**
- * Đọc file C12 (.xlsx) và trích xuất đúng 11 trường theo đặc tả.
- * @param {Buffer} buffer nội dung file xlsx
- * @returns {Promise<{ rows: object[], totalDataRows: number, skippedNoMaDvi: number, sheetName: string, headerRowNumber: number }>}
- */
-async function parseC12Workbook(buffer) {
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
-
-  const location = findHeaderLocation(workbook);
-  if (!location) {
-    throw new Error(
-      'Không tìm thấy dòng tiêu đề có cột "madvi" trong bất kỳ sheet nào của file. ' +
-        'Vui lòng kiểm tra lại file C12 xuất từ TST.'
-    );
-  }
-
-  const { worksheet, headerRowNumber, columnByHeader } = location;
-
+function buildColIndex(columnByHeader) {
   const missingColumns = Object.entries(SOURCE_COLUMNS)
     .filter(([, sourceName]) => !(sourceName in columnByHeader))
     .map(([, sourceName]) => sourceName);
@@ -120,54 +94,108 @@ async function parseC12Workbook(buffer) {
   for (const [field, sourceName] of Object.entries(SOURCE_COLUMNS)) {
     colIndex[field] = columnByHeader[sourceName];
   }
+  return colIndex;
+}
 
+function rowToDonVi(row, colIndex) {
+  const maDonVi = cellText(row.getCell(colIndex.ma_don_vi)).trim();
+  if (!maDonVi) return null;
+
+  const tienDk = parseNumber(row.getCell(colIndex.tien_dk).value);
+  const duDk = parseNumber(row.getCell(colIndex.du_dk).value);
+  const tongbhck = parseNumber(row.getCell(colIndex.tongbhck).value);
+  const tongbst = parseNumber(row.getCell(colIndex.tongbst).value);
+  const laiqh = parseNumber(row.getCell(colIndex.laiqh).value);
+  const tongbsg = parseNumber(row.getCell(colIndex.tongbsg).value);
+  const tienUnc = parseNumber(row.getCell(colIndex.tien_unc).value);
+  const tienCk = parseNumber(row.getCell(colIndex.tien_ck).value);
+
+  return {
+    ma_don_vi: maDonVi,
+    ma_khoi: cellText(row.getCell(colIndex.ma_khoi)).trim() || null,
+    ten_don_vi: cellText(row.getCell(colIndex.ten_don_vi)).trim() || null,
+    so_lao_dong: Math.round(parseNumber(row.getCell(colIndex.so_lao_dong).value)),
+    so_dau_ky: tienDk - duDk,
+    so_ky_nay: tongbhck + tongbst + laiqh - tongbsg,
+    so_da_nop: tienUnc,
+    so_cuoi_ky: tienCk,
+    thang_hoan_thanh: normalizeYyyymm(row.getCell(colIndex.thanght).value),
+    ty_le_no: parseNumber(row.getCell(colIndex.tyleno).value),
+    chuyen_quan: cellText(row.getCell(colIndex.dsnv)).trim() || null,
+  };
+}
+
+/**
+ * Đọc file C12 (.xlsx) và trích xuất đúng 11 trường theo đặc tả.
+ *
+ * Dùng API streaming của ExcelJS (đọc từng dòng, không dựng toàn bộ lưới ô
+ * trong bộ nhớ) — file C12 thật dù nhỏ (vài chục KB) vẫn có thể khai báo
+ * vùng dữ liệu rất lớn (~230 cột) khiến chế độ đọc thường (`workbook.xlsx.load`)
+ * tốn RAM gấp nhiều lần kích thước file, dễ vượt giới hạn bộ nhớ khi hosting
+ * trên các gói máy chủ nhỏ (ví dụ Render free 512MB).
+ *
+ * @param {Buffer} buffer nội dung file xlsx
+ * @returns {Promise<{ rows: object[], totalDataRows: number, skippedNoMaDvi: number, sheetName: string, headerRowNumber: number }>}
+ */
+async function parseC12Workbook(buffer) {
+  const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(Readable.from(buffer), {
+    styles: false,
+    sharedStrings: 'cache',
+    hyperlinks: 'ignore',
+    entries: 'emit',
+    worksheets: 'emit',
+  });
+
+  let headerInfo = null; // { columnByHeader, colIndex, sheetName, headerRowNumber }
   const rows = [];
   let totalDataRows = 0;
   let skippedNoMaDvi = 0;
 
-  const lastRow = worksheet.rowCount;
-  for (let r = headerRowNumber + 1; r <= lastRow; r += 1) {
-    const row = worksheet.getRow(r);
-    if (row.cellCount === 0) continue;
+  for await (const worksheetReader of workbookReader) {
+    let localRowNum = 0;
+    for await (const row of worksheetReader) {
+      localRowNum += 1;
 
-    totalDataRows += 1;
-    const maDonVi = cellText(row.getCell(colIndex.ma_don_vi)).trim();
-    if (!maDonVi) {
-      // Bỏ qua dòng không có mã đơn vị (dòng trắng, dòng tổng cộng, v.v.)
-      skippedNoMaDvi += 1;
-      continue;
+      if (headerInfo && worksheetReader.name === headerInfo.sheetName) {
+        // Dòng dữ liệu thuộc đúng sheet đã tìm thấy tiêu đề.
+        totalDataRows += 1;
+        const donVi = rowToDonVi(row, headerInfo.colIndex);
+        if (!donVi) {
+          skippedNoMaDvi += 1;
+        } else {
+          rows.push(donVi);
+        }
+        continue;
+      }
+
+      if (!headerInfo && localRowNum <= MAX_HEADER_SCAN_ROWS) {
+        const columnByHeader = detectHeaderInRow(row);
+        if (columnByHeader) {
+          const colIndex = buildColIndex(columnByHeader); // ném lỗi ngay nếu thiếu cột bắt buộc
+          headerInfo = {
+            columnByHeader,
+            colIndex,
+            sheetName: worksheetReader.name,
+            headerRowNumber: localRowNum,
+          };
+        }
+      }
     }
+  }
 
-    const tienDk = parseNumber(row.getCell(colIndex.tien_dk).value);
-    const duDk = parseNumber(row.getCell(colIndex.du_dk).value);
-    const tongbhck = parseNumber(row.getCell(colIndex.tongbhck).value);
-    const tongbst = parseNumber(row.getCell(colIndex.tongbst).value);
-    const laiqh = parseNumber(row.getCell(colIndex.laiqh).value);
-    const tongbsg = parseNumber(row.getCell(colIndex.tongbsg).value);
-    const tienUnc = parseNumber(row.getCell(colIndex.tien_unc).value);
-    const tienCk = parseNumber(row.getCell(colIndex.tien_ck).value);
-
-    rows.push({
-      ma_don_vi: maDonVi,
-      ma_khoi: cellText(row.getCell(colIndex.ma_khoi)).trim() || null,
-      ten_don_vi: cellText(row.getCell(colIndex.ten_don_vi)).trim() || null,
-      so_lao_dong: Math.round(parseNumber(row.getCell(colIndex.so_lao_dong).value)),
-      so_dau_ky: tienDk - duDk,
-      so_ky_nay: tongbhck + tongbst + laiqh - tongbsg,
-      so_da_nop: tienUnc,
-      so_cuoi_ky: tienCk,
-      thang_hoan_thanh: normalizeYyyymm(row.getCell(colIndex.thanght).value),
-      ty_le_no: parseNumber(row.getCell(colIndex.tyleno).value),
-      chuyen_quan: cellText(row.getCell(colIndex.dsnv)).trim() || null,
-    });
+  if (!headerInfo) {
+    throw new Error(
+      'Không tìm thấy dòng tiêu đề có cột "madvi" trong bất kỳ sheet nào của file. ' +
+        'Vui lòng kiểm tra lại file C12 xuất từ TST.'
+    );
   }
 
   return {
     rows,
     totalDataRows,
     skippedNoMaDvi,
-    sheetName: worksheet.name,
-    headerRowNumber,
+    sheetName: headerInfo.sheetName,
+    headerRowNumber: headerInfo.headerRowNumber,
   };
 }
 
