@@ -64,12 +64,11 @@
 
         <div class="pay-info">
           <div class="pay-row">
-            <span class="pay-label">Số tiền chuyển (mặc định = Số cuối kỳ, bạn có thể sửa lại)</span>
-            <input type="number" id="pay-so-tien-input" class="amount-input" min="0" step="1000" />
+            <span class="pay-label">Số tiền cần chuyển</span>
+            <span class="pay-value" id="pay-so-tien-hienthi"></span>
             <button type="button" class="copy-btn" id="copy-so-tien" data-copy-target="pay-so-tien-raw">Chép số</button>
             <span class="pay-value-raw" id="pay-so-tien-raw" hidden></span>
           </div>
-          <p class="muted amount-hint" id="pay-so-tien-hienthi"></p>
           <div class="pay-row">
             <span class="pay-label">Tên tài khoản thụ hưởng</span>
             <span class="pay-value" id="pay-ten-tk"></span>
@@ -89,7 +88,7 @@
 
         <div id="qr-section">
           <img id="qr-image" alt="Mã QR chuyển khoản" />
-          <p class="muted">Quét mã QR bằng app ngân hàng — số tiền đã được điền sẵn theo ô phía trên, kiểm tra lại trước khi xác nhận chuyển khoản.</p>
+          <p class="muted">Quét mã QR bằng app ngân hàng, sau đó tự nhập số tiền cần chuyển.</p>
         </div>
         <div id="kho-bac-note" class="notice notice-warn" hidden>
           Kho bạc Nhà nước không thuộc mạng lưới VietQR/NAPAS nên không tạo được mã QR.

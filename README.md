@@ -20,9 +20,9 @@ liệu, quy tắc tra cứu, tính năng thanh toán, yêu cầu bảo mật).
   chung 1 mật khẩu) để truy vết ai đã nạp/sửa dữ liệu.
 - **Frontend:** HTML/CSS/JS thuần, không cần build, phục vụ tĩnh từ `public/`.
 - **QR chuyển khoản:** gọi trực tiếp API công khai `img.vietqr.io` từ trình
-  duyệt (không qua backend). Số tiền mặc định lấy theo Số cuối kỳ, hiển thị
-  trong 1 ô cho phép người tra cứu tự sửa lại trước khi quét — sửa xong QR
-  tự tạo lại theo đúng số đã nhập.
+  duyệt (không qua backend), không gắn `amount` để người dùng tự nhập/sửa
+  số tiền ngay trong app ngân hàng sau khi quét (một số app khoá cứng ô số
+  tiền nếu QR đã có sẵn amount, không sửa lại được).
 
 ### Cài đặt & chạy local
 
