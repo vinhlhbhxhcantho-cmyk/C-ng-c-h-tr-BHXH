@@ -101,7 +101,7 @@
 
   function updateBankDetails(donVi) {
     const bank = BANKS[Number(bankSelect.value)];
-    const noiDung = `+BHXH+103+00+${donVi.maDonVi}+09200+dong BHXH;`;
+    const noiDung = `+BHXH+103+00+${donVi.maDonVi}+09200+dong BHXH`;
     const soTien = getSoTienDangNhap();
 
     document.getElementById('pay-so-tk').textContent = `${bank.account} (${bank.name})`;
