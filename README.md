@@ -85,21 +85,25 @@ service lẫn database PostgreSQL):
 
 1. Vào <https://dashboard.render.com/select-repo?type=blueprint>, đăng nhập
    (có thể dùng tài khoản GitHub), rồi chọn repo
-   `vinhlhbhxhcantho-cmyk/C-ng-c-h-tr-BHXH` và nhánh
-   `claude/bhxh-lookup-payment-module-nki74h` (hoặc `main` sau khi đã merge).
+   `vinhlhbhxhcantho-cmyk/C-ng-c-h-tr-BHXH`, nhánh `main`.
 2. Render đọc file `render.yaml`, hiện sẵn 1 web service (`bhxh-tra-cuu`) và
    1 database (`bhxh-tra-cuu-db`) — bấm **Apply** để tạo.
-3. Đợi build xong (vài phút), mở tab **Shell** của service `bhxh-tra-cuu`,
-   chạy lần lượt:
-   ```bash
-   npm run migrate
-   npm run create-admin -- <ten_dang_nhap> <mat_khau> "Họ tên của bạn"
-   ```
-   (Chạy trực tiếp trong Shell của Render để mật khẩu không cần gửi cho ai
-   khác, kể cả Claude.)
+3. **Không cần Shell** (gói Free có thể khoá tính năng này): server tự chạy
+   migrate khi khởi động. Để tự tạo tài khoản admin đầu tiên, vào service
+   `bhxh-tra-cuu` → tab **Environment** → thêm 3 biến:
+   - `ADMIN_BOOTSTRAP_USERNAME` — tên đăng nhập bạn muốn
+   - `ADMIN_BOOTSTRAP_PASSWORD` — mật khẩu (từ 8 ký tự)
+   - `ADMIN_BOOTSTRAP_FULL_NAME` — họ tên hiển thị
+
+   Lưu lại, Render tự deploy lại — server sẽ tạo tài khoản này nếu chưa có.
+   Có thể xoá 3 biến này sau khi đã đăng nhập thành công lần đầu.
 4. Mở địa chỉ web Render cấp cho service (dạng
    `https://bhxh-tra-cuu-xxxx.onrender.com`) — trang `/` là tra cứu công
    khai, `/admin.html` là trang quản trị, đăng nhập bằng tài khoản vừa tạo.
+   Muốn thêm tài khoản cho các chuyên quản khác: nếu Shell dùng được thì
+   chạy `npm run create-admin -- <username> <password> "Họ tên"`; nếu
+   không, lặp lại cách thêm biến `ADMIN_BOOTSTRAP_*` ở trên với tên đăng
+   nhập mới.
 
 Lưu ý: gói database miễn phí của Render tự xoá sau khoảng 30 ngày không
 nâng cấp — chỉ phù hợp để dùng thử, khi triển khai chính thức nên nâng lên

@@ -16,6 +16,16 @@ services:
         generateValue: true
       - key: ADMIN_TOKEN_TTL_SECONDS
         value: "43200"
+      # Tự tạo 1 tài khoản admin đầu tiên khi server khởi động (không cần
+      # Shell, vì gói Free có thể không có quyền dùng Shell). Chỉ chạy nếu
+      # tài khoản với username này CHƯA tồn tại. Nhập giá trị trực tiếp
+      # trong Render Dashboard (Environment) — không lưu trong file này.
+      - key: ADMIN_BOOTSTRAP_USERNAME
+        sync: false
+      - key: ADMIN_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: ADMIN_BOOTSTRAP_FULL_NAME
+        sync: false
 
 databases:
   - name: bhxh-tra-cuu-db

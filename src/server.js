@@ -3,6 +3,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const config = require('./config');
+const { runStartupBootstrap } = require('./bootstrap');
 
 const adminAuthRoutes = require('./routes/adminAuth');
 const adminImportRoutes = require('./routes/adminImport');
@@ -37,9 +38,13 @@ app.use((err, req, res, next) => {
 });
 
 if (require.main === module) {
-  app.listen(config.port, () => {
-    console.log(`Server đang chạy tại cổng ${config.port}`);
-  });
+  runStartupBootstrap()
+    .catch((err) => console.error('[bootstrap] Lỗi khi khởi tạo:', err))
+    .finally(() => {
+      app.listen(config.port, () => {
+        console.log(`Server đang chạy tại cổng ${config.port}`);
+      });
+    });
 }
 
 module.exports = app;
