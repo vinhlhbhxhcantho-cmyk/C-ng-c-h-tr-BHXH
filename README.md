@@ -20,9 +20,16 @@ liệu, quy tắc tra cứu, tính năng thanh toán, yêu cầu bảo mật).
   chung 1 mật khẩu) để truy vết ai đã nạp/sửa dữ liệu.
 - **Frontend:** HTML/CSS/JS thuần, không cần build, phục vụ tĩnh từ `public/`.
 - **QR chuyển khoản:** gọi trực tiếp API công khai `img.vietqr.io` từ trình
-  duyệt (không qua backend), không gắn `amount` để người dùng tự nhập/sửa
-  số tiền ngay trong app ngân hàng sau khi quét (một số app khoá cứng ô số
-  tiền nếu QR đã có sẵn amount, không sửa lại được).
+  duyệt (không qua backend), gắn sẵn `amount` = Số cuối kỳ làm số tiền
+  tham khảo — đã kiểm chứng thực tế ô số tiền trên app ngân hàng vẫn là ô
+  nhập bình thường, người dùng sửa lại được ngay trong app sau khi quét.
+  Lưu ý: nội dung chuyển khoản (`+BHXH+103+00+<mã đơn vị>+09200+dong BHXH`)
+  bị hầu hết app ngân hàng tự lọc bỏ ký tự "+" khi hiển thị/điền vào ô nội
+  dung (ví dụ còn lại `BHXH10300<mã đơn vị>09200dong BHXH`) — đã kiểm
+  chứng trên cả app ngân hàng chính thức lẫn qua Zalo, không phải lỗi từ
+  trang web. Mã đơn vị vẫn còn nguyên trong chuỗi nên nhiều khả năng hệ
+  thống đối soát vẫn nhận diện được, nhưng nên xác nhận lại với bộ phận
+  đối soát BHXH.
 
 ### Cài đặt & chạy local
 
