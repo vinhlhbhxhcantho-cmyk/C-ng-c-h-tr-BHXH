@@ -20,9 +20,11 @@ liệu, quy tắc tra cứu, tính năng thanh toán, yêu cầu bảo mật).
   chung 1 mật khẩu) để truy vết ai đã nạp/sửa dữ liệu.
 - **Frontend:** HTML/CSS/JS thuần, không cần build, phục vụ tĩnh từ `public/`.
 - **QR chuyển khoản:** gọi trực tiếp API công khai `img.vietqr.io` từ trình
-  duyệt (không qua backend), gắn sẵn `amount` = Số cuối kỳ làm số tiền
-  tham khảo — đã kiểm chứng thực tế ô số tiền trên app ngân hàng vẫn là ô
-  nhập bình thường, người dùng sửa lại được ngay trong app sau khi quét.
+  duyệt (không qua backend), **không** gắn `amount` — đã kiểm chứng thực tế
+  một số app ngân hàng khoá cứng ô số tiền khi QR có sẵn amount, khiến
+  không sửa lại được. Trang chỉ hiển thị Số cuối kỳ làm số tham khảo (có
+  nút chép), người dùng tự nhập số tiền ngay trong app ngân hàng sau khi
+  quét.
   Lưu ý: nội dung chuyển khoản (`+BHXH+103+00+<mã đơn vị>+09200+dong BHXH`)
   bị hầu hết app ngân hàng tự lọc bỏ ký tự "+" khi hiển thị/điền vào ô nội
   dung (ví dụ còn lại `BHXH10300<mã đơn vị>09200dong BHXH`) — đã kiểm

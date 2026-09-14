@@ -98,14 +98,13 @@
     const khoBacNote = document.getElementById('kho-bac-note');
 
     if (bank.bin) {
-      // Gắn sẵn amount = Số cuối kỳ làm số tiền tham khảo khi quét — đã kiểm
-      // chứng thực tế ô "Số tiền chuyển" trên app ngân hàng vẫn là ô nhập
-      // bình thường, người dùng sửa lại được thoải mái sau khi quét.
-      const soTien = Math.round(donVi.soCuoiKy);
+      // Cố ý KHÔNG gắn amount: đã kiểm chứng thực tế một số app ngân hàng
+      // khoá cứng ô số tiền khi QR có sẵn amount, khiến không sửa lại được.
+      // Ưu tiên để người dùng luôn sửa được số tiền ngay trong app sau khi
+      // quét, hơn là có sẵn số tham khảo nhưng có nguy cơ bị khoá.
       const url =
         `https://img.vietqr.io/image/${bank.bin}-${bank.account}-qr_only.png` +
-        `?amount=${soTien}` +
-        `&addInfo=${encodeURIComponent(noiDung)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+        `?addInfo=${encodeURIComponent(noiDung)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
       qrImage.src = url;
       qrSection.hidden = false;
       khoBacNote.hidden = true;
