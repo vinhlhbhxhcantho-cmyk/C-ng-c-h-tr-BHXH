@@ -27,9 +27,9 @@
     return `Tháng ${thang}/${nam}`;
   }
 
-  function formatPercent(n) {
+  function formatSoThangNo(n) {
     if (n === null || n === undefined || Number.isNaN(n)) return '—';
-    return `${n}%`;
+    return `${n} tháng`;
   }
 
   async function loadKyOptions() {
@@ -123,7 +123,7 @@
     document.getElementById('r-so-da-nop').textContent = formatMoney(donVi.soDaNop);
     document.getElementById('r-so-cuoi-ky').textContent = formatMoney(donVi.soCuoiKy);
     document.getElementById('r-thang-hoan-thanh').textContent = formatThangHoanThanh(donVi.thangHoanThanh);
-    document.getElementById('r-ty-le-no').textContent = formatPercent(donVi.tyLeNo);
+    document.getElementById('r-ty-le-no').textContent = formatSoThangNo(donVi.tyLeNo);
 
     renderPayment(donVi);
     resultCard.hidden = false;

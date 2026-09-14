@@ -154,7 +154,7 @@
           <td>${Number(dv.so_da_nop).toLocaleString('vi-VN')}</td>
           <td>${Number(dv.so_cuoi_ky).toLocaleString('vi-VN')}</td>
           <td>${dv.thang_hoan_thanh || ''}</td>
-          <td>${dv.ty_le_no ?? ''}</td>
+          <td>${dv.ty_le_no !== null && dv.ty_le_no !== undefined ? dv.ty_le_no + ' tháng' : ''}</td>
           <td>${dv.chuyen_quan || ''}</td>
         `;
         tbody.appendChild(tr);
