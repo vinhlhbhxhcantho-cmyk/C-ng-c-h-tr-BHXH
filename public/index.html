@@ -33,77 +33,93 @@
     </section>
 
     <section class="card" id="result-card" hidden>
-      <h2 id="result-ten-don-vi"></h2>
-      <p class="muted" id="result-meta"></p>
-
-      <table class="result-table">
-        <tbody>
-          <tr><th>Mã đơn vị</th><td id="r-ma-don-vi"></td></tr>
-          <tr><th>Mã khối</th><td id="r-ma-khoi"></td></tr>
-          <tr><th>Số lao động</th><td id="r-so-lao-dong"></td></tr>
-          <tr><th>Số đầu kỳ</th><td id="r-so-dau-ky"></td></tr>
-          <tr><th>Số kỳ này</th><td id="r-so-ky-nay"></td></tr>
-          <tr><th>Số đã nộp</th><td id="r-so-da-nop"></td></tr>
-          <tr class="highlight"><th>Số cuối kỳ</th><td id="r-so-cuoi-ky"></td></tr>
-          <tr><th>Tháng hoàn thành nghĩa vụ</th><td id="r-thang-hoan-thanh"></td></tr>
-          <tr><th>Tỷ lệ nợ</th><td id="r-ty-le-no"></td></tr>
-        </tbody>
-      </table>
-
-      <div id="paid-up-note" class="notice notice-good" hidden>
-        Đơn vị không còn nợ trong kỳ này. Không cần lập lệnh chuyển khoản.
+      <div class="result-header">
+        <h2 id="result-ten-don-vi"></h2>
+        <p class="muted" id="result-meta"></p>
       </div>
 
-      <div id="payment-section" hidden>
-        <h3>Thông tin chuyển khoản</h3>
-
-        <div class="field">
-          <label for="bank-select">Chọn tài khoản nhận</label>
-          <select id="bank-select"></select>
+      <div class="result-grid">
+        <div class="result-col">
+          <h3 class="col-title">Thông tin đơn vị</h3>
+          <div class="info-row"><span class="info-label">Mã đơn vị</span><span class="info-value" id="r-ma-don-vi"></span></div>
+          <div class="info-row"><span class="info-label">Mã khối</span><span class="info-value" id="r-ma-khoi"></span></div>
+          <div class="info-row"><span class="info-label">Số lao động</span><span class="info-value" id="r-so-lao-dong"></span></div>
+          <div class="info-row"><span class="info-label">Tháng hoàn thành nghĩa vụ</span><span class="info-value" id="r-thang-hoan-thanh"></span></div>
         </div>
 
-        <div class="pay-info">
-          <div class="pay-row">
-            <span class="pay-label">Số tiền cần chuyển</span>
-            <span class="pay-value" id="pay-so-tien-hienthi"></span>
-            <button type="button" class="copy-btn" id="copy-so-tien" data-copy-target="pay-so-tien-raw">Chép số</button>
-            <span class="pay-value-raw" id="pay-so-tien-raw" hidden></span>
-          </div>
-          <div class="pay-row">
-            <span class="pay-label">Tên tài khoản thụ hưởng</span>
-            <span class="pay-value" id="pay-ten-tk"></span>
-            <button type="button" class="copy-btn" id="copy-ten-tk" data-copy-target="pay-ten-tk">Chép</button>
-          </div>
-          <div class="pay-row">
-            <span class="pay-label">Số tài khoản / Ngân hàng</span>
-            <span class="pay-value" id="pay-so-tk"></span>
-            <button type="button" class="copy-btn" id="copy-so-tk" data-copy-target="pay-so-tk">Chép</button>
-          </div>
-          <div class="pay-row">
-            <span class="pay-label">Nội dung chuyển khoản</span>
-            <span class="pay-value" id="pay-noi-dung"></span>
-            <button type="button" class="copy-btn" id="copy-noi-dung" data-copy-target="pay-noi-dung">Chép</button>
-          </div>
+        <div class="result-col">
+          <h3 class="col-title">Số liệu kỳ này</h3>
+          <div class="info-row"><span class="info-label">Số đầu kỳ</span><span class="info-value" id="r-so-dau-ky"></span></div>
+          <div class="info-row"><span class="info-label">Số kỳ này</span><span class="info-value" id="r-so-ky-nay"></span></div>
+          <div class="info-row"><span class="info-label">Số đã nộp</span><span class="info-value" id="r-so-da-nop"></span></div>
+          <div class="info-row highlight"><span class="info-label">Số cuối kỳ</span><span class="info-value" id="r-so-cuoi-ky"></span></div>
+          <div class="info-row"><span class="info-label">Tỷ lệ nợ</span><span class="info-value" id="r-ty-le-no"></span></div>
         </div>
 
-        <div id="qr-section">
-          <img id="qr-image" alt="Mã QR chuyển khoản" />
-          <p class="muted">Quét mã QR bằng app ngân hàng, sau đó tự nhập số tiền cần chuyển (xem số tham khảo ở trên).</p>
-        </div>
-        <div id="kho-bac-note" class="notice notice-warn" hidden>
-          Kho bạc Nhà nước không thuộc mạng lưới VietQR/NAPAS nên không tạo được mã QR.
-          Vui lòng chuyển khoản thủ công theo thông tin ở trên.
-        </div>
+        <div class="result-col">
+          <h3 class="col-title">Thanh toán</h3>
 
-        <p class="disclaimer">
-          Đây là công cụ hỗ trợ lập lệnh chuyển khoản. Việc ghi nhận đã nộp tiền vẫn theo
-          đối soát chính thức của cơ quan BHXH, không tự động qua công cụ này.
-        </p>
+          <div id="paid-up-note" class="notice notice-good" hidden>
+            Đơn vị không còn nợ trong kỳ này. Không cần lập lệnh chuyển khoản.
+          </div>
+
+          <div id="payment-section" hidden>
+            <div class="field">
+              <label for="bank-select">Chọn tài khoản nhận</label>
+              <select id="bank-select"></select>
+            </div>
+
+            <div class="pay-info">
+              <div class="pay-row">
+                <span class="pay-label">Số tiền cần chuyển</span>
+                <span class="pay-value" id="pay-so-tien-hienthi"></span>
+                <button type="button" class="copy-btn" id="copy-so-tien" data-copy-target="pay-so-tien-raw">Chép số</button>
+                <span class="pay-value-raw" id="pay-so-tien-raw" hidden></span>
+              </div>
+              <div class="pay-row">
+                <span class="pay-label">Tên tài khoản thụ hưởng</span>
+                <span class="pay-value" id="pay-ten-tk"></span>
+                <button type="button" class="copy-btn" id="copy-ten-tk" data-copy-target="pay-ten-tk">Chép</button>
+              </div>
+              <div class="pay-row">
+                <span class="pay-label">Số tài khoản / Ngân hàng</span>
+                <span class="pay-value" id="pay-so-tk"></span>
+                <button type="button" class="copy-btn" id="copy-so-tk" data-copy-target="pay-so-tk">Chép</button>
+              </div>
+              <div class="pay-row">
+                <span class="pay-label">Nội dung chuyển khoản</span>
+                <span class="pay-value" id="pay-noi-dung"></span>
+                <button type="button" class="copy-btn" id="copy-noi-dung" data-copy-target="pay-noi-dung">Chép</button>
+              </div>
+            </div>
+
+            <div id="qr-section">
+              <img id="qr-image" alt="Mã QR chuyển khoản" />
+              <p class="muted">Quét mã QR bằng app ngân hàng, sau đó tự nhập số tiền cần chuyển (xem số tham khảo ở trên).</p>
+            </div>
+            <div id="kho-bac-note" class="notice notice-warn" hidden>
+              Kho bạc Nhà nước không thuộc mạng lưới VietQR/NAPAS nên không tạo được mã QR.
+              Vui lòng chuyển khoản thủ công theo thông tin ở trên.
+            </div>
+
+            <p class="disclaimer">
+              Đây là công cụ hỗ trợ lập lệnh chuyển khoản. Việc ghi nhận đã nộp tiền vẫn theo
+              đối soát chính thức của cơ quan BHXH, không tự động qua công cụ này.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
+    <div class="notice notice-warn footer-notice">
+      <strong>Lưu ý về thời điểm chốt số liệu:</strong> số liệu được chốt vào ngày 05 hằng
+      tháng cho tháng liền trước đó. Vì vậy, số liệu của <strong>tháng hiện tại</strong> chỉ
+      mang tính <strong>tạm thời</strong>, chưa phải số cuối kỳ chính thức; chỉ số liệu của
+      <strong>các tháng trước</strong> mới đã được chốt chính thức. Số liệu chi tiết, đầy đủ
+      sẽ được gửi đến đơn vị theo mẫu C12 hằng tháng để đối chiếu cụ thể.
+    </div>
     <p>Số liệu được cán bộ BHXH cập nhật hàng tháng từ báo cáo C12. Nếu có sai lệch, vui lòng liên hệ chuyên quản phụ trách đơn vị.</p>
   </footer>
 
