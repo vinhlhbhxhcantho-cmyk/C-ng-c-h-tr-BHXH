@@ -73,6 +73,10 @@ dòng không có mã đơn vị, và thông báo lỗi khi thiếu cột bắt b
   **một thông báo lỗi chung duy nhất**, tránh lộ thông tin cho phép dò tìm.
 - Có giới hạn tốc độ (rate limit) cho API tra cứu công khai và API đăng nhập
   admin để hạn chế dò quét/brute-force.
+- Cả trang tra cứu công khai và đăng nhập admin đều yêu cầu **mã xác nhận
+  (CAPTCHA)** dạng ảnh chữ méo (tự tạo bằng `svg-captcha`, không cần đăng ký
+  dịch vụ ngoài) — đáp án được ký (HMAC) kèm hạn dùng 5 phút, không lưu trạng
+  thái ở server (stateless), xem `src/services/captcha.js`.
 - Không có endpoint nào liệt kê toàn bộ đơn vị công khai (chỉ admin đã đăng
   nhập mới xem được danh sách, phục vụ đối chiếu).
 - Chỉ lưu đúng 11 trường cần thiết từ báo cáo C12 gốc (~230 cột), không lưu

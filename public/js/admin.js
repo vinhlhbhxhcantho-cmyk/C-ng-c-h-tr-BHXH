@@ -6,6 +6,24 @@
   const adminArea = document.getElementById('admin-area');
   const loginForm = document.getElementById('login-form');
   const loginError = document.getElementById('login-error');
+  const captchaImage = document.getElementById('captcha-image');
+  const captchaInput = document.getElementById('captcha-input');
+  const captchaRefreshBtn = document.getElementById('captcha-refresh');
+
+  let captchaToken = null;
+
+  async function loadCaptcha() {
+    captchaInput.value = '';
+    try {
+      const res = await fetch('/api/captcha');
+      const data = await res.json();
+      captchaImage.innerHTML = data.svg;
+      captchaToken = data.token;
+    } catch (err) {
+      captchaImage.textContent = 'Không tải được mã xác nhận';
+      captchaToken = null;
+    }
+  }
 
   function getToken() {
     return sessionStorage.getItem(TOKEN_KEY);
@@ -48,16 +66,18 @@
     loginError.hidden = true;
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
+    const captchaAnswer = captchaInput.value.trim();
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, captchaToken, captchaAnswer }),
       });
       const data = await res.json();
       if (!res.ok) {
         loginError.textContent = data.error || 'Đăng nhập thất bại.';
         loginError.hidden = false;
+        await loadCaptcha();
         return;
       }
       sessionStorage.setItem(TOKEN_KEY, data.token);
@@ -68,6 +88,9 @@
       loginError.hidden = false;
     }
   });
+
+  captchaRefreshBtn.addEventListener('click', loadCaptcha);
+  loadCaptcha();
 
   document.getElementById('logout-btn').addEventListener('click', doLogout);
 

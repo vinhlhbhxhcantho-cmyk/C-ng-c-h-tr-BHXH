@@ -75,6 +75,35 @@ body {
   border-color: var(--primary);
 }
 
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.captcha-image {
+  flex: 1 1 auto;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  line-height: 0;
+}
+.captcha-image svg { display: block; width: 100%; height: 46px; }
+.captcha-refresh-btn {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--primary);
+}
+.captcha-refresh-btn:hover { background: var(--bg); }
+
 button[type="submit"] {
   width: 100%;
   padding: 12px;

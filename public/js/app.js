@@ -13,8 +13,25 @@
   const errorMsg = document.getElementById('error-msg');
   const resultCard = document.getElementById('result-card');
   const bankSelect = document.getElementById('bank-select');
+  const captchaImage = document.getElementById('captcha-image');
+  const captchaInput = document.getElementById('captcha-input');
+  const captchaRefreshBtn = document.getElementById('captcha-refresh');
 
   let currentResult = null;
+  let captchaToken = null;
+
+  async function loadCaptcha() {
+    captchaInput.value = '';
+    try {
+      const res = await fetch('/api/captcha');
+      const data = await res.json();
+      captchaImage.innerHTML = data.svg;
+      captchaToken = data.token;
+    } catch (err) {
+      captchaImage.textContent = 'Không tải được mã xác nhận';
+      captchaToken = null;
+    }
+  }
 
   function formatMoney(n) {
     return Math.round(n).toLocaleString('vi-VN') + ' đ';
@@ -143,20 +160,23 @@
     const maDonVi = document.getElementById('maDonVi').value.trim();
     const email = document.getElementById('email').value.trim();
     const ky = kySelect.value;
+    const captchaAnswer = captchaInput.value.trim();
 
     try {
       const res = await fetch('/api/tra-cuu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ maDonVi, email, ky }),
+        body: JSON.stringify({ maDonVi, email, ky, captchaToken, captchaAnswer }),
       });
       const data = await res.json();
       if (!res.ok) {
         errorMsg.textContent = data.error || 'Có lỗi xảy ra, vui lòng thử lại.';
         errorMsg.hidden = false;
+        await loadCaptcha();
         return;
       }
       renderResult(data);
+      await loadCaptcha();
     } catch (err) {
       errorMsg.textContent = 'Không kết nối được máy chủ. Vui lòng thử lại sau.';
       errorMsg.hidden = false;
@@ -165,6 +185,8 @@
       submitBtn.textContent = 'Tra cứu';
     }
   });
+
+  captchaRefreshBtn.addEventListener('click', loadCaptcha);
 
   bankSelect.addEventListener('change', () => {
     if (currentResult) updateBankDetails(currentResult);
@@ -191,4 +213,5 @@
 
   populateBankSelect();
   loadKyOptions();
+  loadCaptcha();
 })();

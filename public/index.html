@@ -27,6 +27,14 @@
           <label for="email">Email chuyên quản</label>
           <input type="email" id="email" name="email" placeholder="email đã đăng ký với đơn vị" required autocomplete="off" />
         </div>
+        <div class="field">
+          <label for="captcha-input">Nhập mã xác nhận</label>
+          <div class="captcha-row">
+            <span id="captcha-image" class="captcha-image" aria-label="Mã xác nhận"></span>
+            <button type="button" id="captcha-refresh" class="captcha-refresh-btn" title="Đổi mã khác">⟳</button>
+          </div>
+          <input type="text" id="captcha-input" placeholder="Nhập ký tự trong ảnh trên" required autocomplete="off" />
+        </div>
         <button type="submit" id="submit-btn">Tra cứu</button>
       </form>
       <p id="error-msg" class="error" hidden></p>

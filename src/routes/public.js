@@ -2,10 +2,12 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const pool = require('../db/pool');
 const { timDonViTraCuu } = require('../services/donViService');
+const { createCaptcha, verifyCaptcha } = require('../services/captcha');
 
 const router = express.Router();
 
 const GENERIC_ERROR = 'Không tìm thấy đơn vị khớp với thông tin đã nhập.';
+const CAPTCHA_ERROR = 'Mã xác nhận không đúng hoặc đã hết hạn, vui lòng thử lại.';
 
 // Chặn dò quét hàng loạt mã đơn vị / email: tối đa 15 lần tra cứu / 10 phút / IP.
 const lookupLimiter = rateLimit({
@@ -16,6 +18,19 @@ const lookupLimiter = rateLimit({
   message: { error: 'Bạn đã tra cứu quá nhiều lần. Vui lòng thử lại sau ít phút.' },
 });
 
+// Chặn tạo captcha tràn lan (không phải để giải, chỉ để né rate limit tra cứu).
+const captchaLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.get('/captcha', captchaLimiter, (req, res) => {
+  const { svg, token } = createCaptcha();
+  res.json({ svg, token });
+});
+
 router.get('/ky', async (req, res) => {
   const { rows } = await pool.query(
     'SELECT DISTINCT ky FROM donvi_ky ORDER BY ky DESC'
@@ -24,7 +39,11 @@ router.get('/ky', async (req, res) => {
 });
 
 router.post('/tra-cuu', lookupLimiter, async (req, res) => {
-  const { maDonVi, email, ky } = req.body || {};
+  const { maDonVi, email, ky, captchaToken, captchaAnswer } = req.body || {};
+
+  if (!verifyCaptcha(captchaToken, captchaAnswer)) {
+    return res.status(400).json({ error: CAPTCHA_ERROR, captchaFailed: true });
+  }
 
   if (!maDonVi || !email || typeof maDonVi !== 'string' || typeof email !== 'string') {
     // Cùng một thông báo lỗi chung cho mọi trường hợp không khớp/thiếu thông tin.

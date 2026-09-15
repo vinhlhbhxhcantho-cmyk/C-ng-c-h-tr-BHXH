@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const pool = require('../db/pool');
 const config = require('../config');
+const { verifyCaptcha } = require('../services/captcha');
 
 const router = express.Router();
 
@@ -16,7 +17,12 @@ const loginLimiter = rateLimit({
 });
 
 router.post('/login', loginLimiter, async (req, res) => {
-  const { username, password } = req.body || {};
+  const { username, password, captchaToken, captchaAnswer } = req.body || {};
+
+  if (!verifyCaptcha(captchaToken, captchaAnswer)) {
+    return res.status(400).json({ error: 'Mã xác nhận không đúng hoặc đã hết hạn, vui lòng thử lại.', captchaFailed: true });
+  }
+
   if (!username || !password) {
     return res.status(400).json({ error: 'Thiếu tên đăng nhập hoặc mật khẩu.' });
   }
