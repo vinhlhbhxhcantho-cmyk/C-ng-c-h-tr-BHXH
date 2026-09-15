@@ -1,4 +1,10 @@
 (function () {
+  const ESCAPE_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value).replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
+  }
+
   const TOKEN_KEY = 'bhxh_admin_token';
   const PROFILE_KEY = 'bhxh_admin_profile';
 
@@ -170,15 +176,15 @@
       for (const dv of rows) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${dv.ma_don_vi}</td><td>${dv.ma_khoi || ''}</td><td>${dv.ten_don_vi || ''}</td>
+          <td>${escapeHtml(dv.ma_don_vi)}</td><td>${escapeHtml(dv.ma_khoi)}</td><td>${escapeHtml(dv.ten_don_vi)}</td>
           <td>${dv.so_lao_dong ?? ''}</td>
           <td>${Number(dv.so_dau_ky).toLocaleString('vi-VN')}</td>
           <td>${Number(dv.so_ky_nay).toLocaleString('vi-VN')}</td>
           <td>${Number(dv.so_da_nop).toLocaleString('vi-VN')}</td>
           <td>${Number(dv.so_cuoi_ky).toLocaleString('vi-VN')}</td>
-          <td>${dv.thang_hoan_thanh || ''}</td>
+          <td>${escapeHtml(dv.thang_hoan_thanh)}</td>
           <td>${dv.ty_le_no !== null && dv.ty_le_no !== undefined ? dv.ty_le_no + ' tháng' : ''}</td>
-          <td>${dv.chuyen_quan || ''}</td>
+          <td>${escapeHtml(dv.chuyen_quan)}</td>
         `;
         tbody.appendChild(tr);
       }
@@ -199,9 +205,9 @@
         const thoiGian = new Date(log.created_at).toLocaleString('vi-VN');
         tr.innerHTML = `
           <td>${thoiGian}</td>
-          <td>${log.full_name || log.username || '—'}</td>
-          <td>${log.ky}</td>
-          <td>${log.file_name || ''}</td>
+          <td>${escapeHtml(log.full_name || log.username || '—')}</td>
+          <td>${escapeHtml(log.ky)}</td>
+          <td>${escapeHtml(log.file_name)}</td>
           <td>${log.rows_in_file}</td>
           <td>${log.rows_upserted}</td>
           <td>${log.rows_skipped}</td>
