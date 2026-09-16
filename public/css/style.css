@@ -234,6 +234,8 @@ button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
   line-height: 1.5;
 }
 .footer-notice strong { color: var(--warn-text); }
+.footer-notice a { color: var(--primary); word-break: break-all; }
+.footer-notice a:hover { text-decoration: none; }
 
 @media (max-width: 420px) {
   .info-row { font-size: 0.86rem; }
