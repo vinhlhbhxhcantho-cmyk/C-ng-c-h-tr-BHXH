@@ -212,18 +212,6 @@ button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
 .copy-btn:hover { background: var(--primary); color: #fff; }
 .copy-btn.copied { background: var(--good-text); border-color: var(--good-text); color: #fff; }
 
-#qr-section {
-  text-align: center;
-  padding: 12px 0;
-}
-#qr-image {
-  max-width: 260px;
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-}
-
 .disclaimer {
   font-size: 0.8rem;
   color: var(--muted);

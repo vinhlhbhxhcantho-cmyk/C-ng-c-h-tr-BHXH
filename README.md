@@ -3,8 +3,8 @@
 ## Module: Tra cứu & Thanh toán số tiền BHXH cần đóng
 
 Cho phép doanh nghiệp/hộ kinh doanh tự tra cứu số tiền BHXH/BHYT/BHTN cần đóng
-theo mã đơn vị (không cần tài khoản Claude, không cần đăng nhập), và lập lệnh
-chuyển khoản (QR + thông tin tài khoản) nếu còn nợ. Dữ liệu do cán bộ BHXH nạp
+theo mã đơn vị (không cần tài khoản Claude, không cần đăng nhập), và xem
+thông tin tài khoản để tự chuyển khoản nếu còn nợ. Dữ liệu do cán bộ BHXH nạp
 hàng tháng từ báo cáo C12 xuất ra từ TST.
 
 Xem đặc tả đầy đủ trong yêu cầu ban đầu của dự án (mục đích, quy tắc nạp dữ
@@ -19,12 +19,10 @@ liệu, quy tắc tra cứu, tính năng thanh toán, yêu cầu bảo mật).
 - **Xác thực admin:** JWT + bcrypt, nhiều tài khoản riêng biệt (không dùng
   chung 1 mật khẩu) để truy vết ai đã nạp/sửa dữ liệu.
 - **Frontend:** HTML/CSS/JS thuần, không cần build, phục vụ tĩnh từ `public/`.
-- **QR chuyển khoản:** gọi trực tiếp API công khai `img.vietqr.io` từ trình
-  duyệt (không qua backend), **không** gắn `amount` — đã kiểm chứng thực tế
-  một số app ngân hàng khoá cứng ô số tiền khi QR có sẵn amount, khiến
-  không sửa lại được. Trang chỉ hiển thị Số cuối kỳ làm số tham khảo (có
-  nút chép), người dùng tự nhập số tiền ngay trong app ngân hàng sau khi
-  quét.
+- **Thanh toán:** không dùng mã QR (đã bỏ theo yêu cầu) — trang chỉ hiển thị
+  thông tin tài khoản nhận, số tiền tham khảo (Số cuối kỳ) và nội dung chuyển
+  khoản dưới dạng chữ, kèm nút chép nhanh; đơn vị tự chuyển khoản thủ công
+  qua app/ngân hàng của mình.
   Lưu ý: nội dung chuyển khoản (`+BHXH+103+00+<mã đơn vị>+09200+dong BHXH`)
   bị hầu hết app ngân hàng tự lọc bỏ ký tự "+" khi hiển thị/điền vào ô nội
   dung (ví dụ còn lại `BHXH10300<mã đơn vị>09200dong BHXH`) — đã kiểm

@@ -1,9 +1,9 @@
 (function () {
   const BANKS = [
-    { name: 'Agribank, CN Cần Thơ II', account: '1890202916015', bin: '970405' },
-    { name: 'BIDV, CN Cần Thơ', account: '7419842015', bin: '970418' },
-    { name: 'VietinBank, CN Tây Cần Thơ', account: '916015000002', bin: '970415' },
-    { name: 'Kho bạc Nhà nước', account: '3743.0.1056714.92008', bin: null },
+    { name: 'Agribank, CN Cần Thơ II', account: '1890202916015' },
+    { name: 'BIDV, CN Cần Thơ', account: '7419842015' },
+    { name: 'VietinBank, CN Tây Cần Thơ', account: '916015000002' },
+    { name: 'Kho bạc Nhà nước', account: '3743.0.1056714.92008' },
   ];
   const ACCOUNT_NAME = 'BAO HIEM XA HOI THANH PHO CAN THO';
 
@@ -109,26 +109,6 @@
 
     document.getElementById('pay-so-tk').textContent = `${bank.account} (${bank.name})`;
     document.getElementById('pay-noi-dung').textContent = noiDung;
-
-    const qrImage = document.getElementById('qr-image');
-    const qrSection = document.getElementById('qr-section');
-    const khoBacNote = document.getElementById('kho-bac-note');
-
-    if (bank.bin) {
-      // Cố ý KHÔNG gắn amount: đã kiểm chứng thực tế một số app ngân hàng
-      // khoá cứng ô số tiền khi QR có sẵn amount, khiến không sửa lại được.
-      // Ưu tiên để người dùng luôn sửa được số tiền ngay trong app sau khi
-      // quét, hơn là có sẵn số tham khảo nhưng có nguy cơ bị khoá.
-      const url =
-        `https://img.vietqr.io/image/${bank.bin}-${bank.account}-qr_only.png` +
-        `?addInfo=${encodeURIComponent(noiDung)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-      qrImage.src = url;
-      qrSection.hidden = false;
-      khoBacNote.hidden = true;
-    } else {
-      qrSection.hidden = true;
-      khoBacNote.hidden = false;
-    }
   }
 
   function renderResult(donVi) {

@@ -17,13 +17,7 @@ const app = express();
 // express-rate-limit sẽ báo lỗi ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
 app.set('trust proxy', 1);
 
-app.use(
-  helmet({
-    // Cho phép trang tĩnh tự host gọi VietQR image trực tiếp từ trình duyệt (thẻ <img>),
-    // không qua backend, nên không cần nới lỏng CSP connect-src ở đây.
-    contentSecurityPolicy: false,
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
