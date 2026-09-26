@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Rà Soát & Phát Triển Đơn Vị, Lao Động BHXH</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS for Excel Reading and Writing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Chart.js for Visual Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-report, #printable-report * { visibility: visible; }
+      #printable-report { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <header class="bg-gradient-to-r from-blue-900 via-sky-800 to-indigo-900 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-sky-300 text-xl shadow-inner">
+          <i class="fa-solid fa-building-shield"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-[11px] uppercase tracking-widest font-semibold text-sky-200">Bảo Hiểm Xã Hội Việt Nam</span>
+            <span class="text-[10px] bg-sky-500/30 text-sky-200 px-2 py-0.5 rounded-full border border-sky-400/30">Hệ thống Rà soát Toàn diện</span>
+          </div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight">HỆ THỐNG RÀ SOÁT & THEO DÕI PHÁT TRIỂN ĐỐI TƯỢNG BHXH</h1>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span id="save-indicator" class="text-[10px] text-sky-200/80 mr-1" title="Dữ liệu chỉ lưu trong trình duyệt trên máy này, không gửi đi đâu">
+          <i class="fa-solid fa-lock mr-1"></i>Lưu cục bộ
+        </span>
+        <button id="btn-load-demo" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm transition flex items-center gap-1.5" title="Tải dữ liệu mẫu đơn vị & người lao động">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Nạp số liệu mẫu</span>
+        </button>
+        <button id="btn-export-excel" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-file-excel text-emerald-400"></i>
+          <span>Xuất Excel</span>
+        </button>
+        <button id="btn-print-active-minutes" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition flex items-center gap-1.5" title="In biên bản cho đơn vị đang được tích chọn">
+          <i class="fa-solid fa-print text-sky-300"></i>
+          <span>In biên bản rà soát</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-blue-950/70 border-t border-white/10 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto flex space-x-1 sm:space-x-4 overflow-x-auto">
+        <button data-tab="tab-dashboard" class="tab-btn active border-b-2 border-sky-400 text-sky-300 px-3 py-2.5 text-xs sm:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Tổng quan Chỉ số</span>
+        </button>
+        <button data-tab="tab-units" class="tab-btn border-b-2 border-transparent text-slate-300 hover:text-white px-3 py-2.5 text-xs sm:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-building-circle-check"></i>
+          <span>Rà soát Đơn vị (MST)</span>
+          <span id="badge-unjoined-units" class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </button>
+        <button data-tab="tab-employees" class="tab-btn border-b-2 border-transparent text-slate-300 hover:text-white px-3 py-2.5 text-xs sm:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-users-viewfinder"></i>
+          <span>Rà soát Lao động (Thuế QTT)</span>
+          <span id="badge-unjoined-employees" class="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </button>
+        <button data-tab="tab-under" class="tab-btn border-b-2 border-transparent text-slate-300 hover:text-white px-3 py-2.5 text-xs sm:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-scale-unbalanced"></i>
+          <span>Đơn vị đóng thiếu LĐ</span>
+          <span id="badge-under" class="bg-purple-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+        </button>
+        <button data-tab="tab-import" class="tab-btn border-b-2 border-transparent text-slate-300 hover:text-white px-3 py-2.5 text-xs sm:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Nạp & Cập nhật CSDL</span>
+        </button>
+        <button data-tab="tab-settings" class="tab-btn border-b-2 border-transparent text-slate-300 hover:text-white px-3 py-2.5 text-xs sm:text-sm font-medium transition flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Cấu hình & Tiêu chí</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="toast" class="fixed top-16 right-5 z-[60] transform translate-x-[120%] transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900/95 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3 pointer-events-auto max-w-sm">
+      <div id="toast-icon" class="text-emerald-400 text-lg"><i class="fa-solid fa-circle-check"></i></div>
+      <div id="toast-message" class="text-xs sm:text-sm font-medium text-slate-200">Thông báo hệ thống</div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 flex-1 space-y-5">
+
+    <!-- Demo banner -->
+    <div id="demo-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-2">
+      <span><i class="fa-solid fa-triangle-exclamation mr-1.5 text-amber-600"></i>Đang hiển thị <strong>SỐ LIỆU MẪU</strong> (hư cấu, chỉ để thử nghiệm). Khi nạp file thật, hệ thống sẽ tự xóa số liệu mẫu để không lẫn với dữ liệu thật.</span>
+      <button id="btn-clear-demo" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold">Xóa số liệu mẫu</button>
+    </div>
+
+    <!-- ==================== TAB 1: DASHBOARD ==================== -->
+    <section id="tab-dashboard" class="tab-content space-y-5">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple text-sky-600"></i> Bảng điều khiển phân tích rà soát liên ngành (Thuế - Sở TC/KHĐT - BHXH)
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">Số liệu được đối soát tự động giữa CSDL BHXH đang quản lý và dữ liệu đối soát bên ngoài.</p>
+        </div>
+        <div class="text-[11px] font-medium text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+          Kỳ rà soát: <span id="label-review-year" class="font-bold text-sky-700">Năm 2026</span>
+        </div>
+      </div>
+
+      <div id="dashboard-empty" class="hidden bg-white rounded-2xl p-6 border border-dashed border-slate-300 text-center">
+        <div class="w-12 h-12 bg-sky-50 rounded-full flex items-center justify-center mx-auto text-sky-500 text-xl mb-2"><i class="fa-solid fa-database"></i></div>
+        <p class="text-sm font-semibold text-slate-700">Chưa có dữ liệu rà soát</p>
+        <p class="text-xs text-slate-500 mt-1">Vào tab <strong>Nạp & Cập nhật CSDL</strong> để nạp file, hoặc bấm <strong>Nạp số liệu mẫu</strong> để xem thử.</p>
+      </div>
+
+      <div>
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-building text-sky-600"></i> Chỉ số Rà soát Đơn vị mới thành lập / Hộ kinh doanh (Theo Mã số thuế)
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+            <span class="text-[11px] text-slate-400 block font-medium">Nguồn đối soát</span>
+            <div id="kpi-u-total" class="text-xl font-bold text-slate-800 mt-0.5">0</div>
+            <span class="text-[10px] text-slate-500 mt-1 block">Đơn vị / Hộ KD</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Đã tham gia BHXH</span>
+            <div id="kpi-u-joined" class="text-xl font-bold text-emerald-600 mt-0.5">0</div>
+            <span class="text-[10px] text-emerald-600 font-semibold mt-1 block">Khớp MST, đang đóng</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-rose-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Chưa tham gia BHXH</span>
+            <div id="kpi-u-unjoined" class="text-xl font-bold text-rose-600 mt-0.5">0</div>
+            <span class="text-[10px] text-rose-600 font-semibold mt-1 block">Không có trong CSDL</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-orange-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Nghi vấn / Ngừng đóng</span>
+            <div id="kpi-u-suspect" class="text-xl font-bold text-orange-600 mt-0.5">0</div>
+            <span class="text-[10px] text-orange-600 font-medium mt-1 block">Cần xác minh</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-purple-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Giải thể / Tạm ngừng</span>
+            <div id="kpi-u-inactive" class="text-xl font-bold text-purple-600 mt-0.5">0</div>
+            <span class="text-[10px] text-purple-600 font-medium mt-1 block">Không thuộc diện đôn đốc</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Có giải trình</span>
+            <div id="kpi-u-explained" class="text-xl font-bold text-amber-600 mt-0.5">0</div>
+            <span id="kpi-u-explained-warn" class="text-[10px] text-amber-600 font-medium mt-1 block">0 cần xem xét lại</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-sky-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Vận động thành công</span>
+            <div id="kpi-u-success" class="text-xl font-bold text-sky-700 mt-0.5">0</div>
+            <span id="kpi-u-rate" class="text-[10px] text-sky-600 font-bold mt-1 block">Tỷ lệ: 0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-users text-indigo-600"></i> Chỉ số Rà soát Lao động (Theo Mã số BHXH, CCCD, Họ tên + Năm sinh)
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+            <span class="text-[11px] text-slate-400 block font-medium">Tổng nguồn Thuế / Ngoài</span>
+            <div id="kpi-e-total" class="text-xl font-bold text-slate-800 mt-0.5">0</div>
+            <span class="text-[10px] text-slate-500 mt-1 block">Lao động rà soát</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Đã tham gia BHXH</span>
+            <div id="kpi-e-joined" class="text-xl font-bold text-emerald-600 mt-0.5">0</div>
+            <span class="text-[10px] text-emerald-600 font-medium mt-1 block">Đúng đơn vị chi trả</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-rose-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Chưa tham gia BHXH</span>
+            <div id="kpi-e-unjoined" class="text-xl font-bold text-rose-600 mt-0.5">0</div>
+            <span class="text-[10px] text-rose-600 font-semibold mt-1 block">Tiềm năng phát triển</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-orange-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Nghi vấn</span>
+            <div id="kpi-e-suspect" class="text-xl font-bold text-orange-600 mt-0.5">0</div>
+            <span class="text-[10px] text-orange-600 font-medium mt-1 block">Cần xác minh thủ công</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-purple-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Khác ĐV / Đã báo giảm</span>
+            <div id="kpi-e-other" class="text-xl font-bold text-purple-600 mt-0.5">0</div>
+            <span class="text-[10px] text-purple-600 font-medium mt-1 block">Có thu nhập nơi khác</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Đóng thấp hơn thu nhập</span>
+            <div id="kpi-e-lowpay" class="text-xl font-bold text-amber-600 mt-0.5">0</div>
+            <span class="text-[10px] text-amber-600 font-medium mt-1 block">Theo ngưỡng cấu hình</span>
+          </div>
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
+            <span class="text-[11px] text-slate-400 block font-medium">Tiến độ tiếp cận LĐ</span>
+            <div id="kpi-e-rate" class="text-xl font-bold text-indigo-600 mt-0.5">0%</div>
+            <span class="text-[10px] text-slate-500 mt-1 block">Đã gửi TB / Lập biên bản</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-sky-600"></i> Cơ cấu Đối soát & Phân loại Đơn vị
+            </h3>
+            <span class="text-[11px] text-slate-400">Mỗi đơn vị thuộc đúng 1 nhóm</span>
+          </div>
+          <div class="h-64 relative flex items-center justify-center">
+            <canvas id="chart-units-status"></canvas>
+          </div>
+          <div id="legend-units-status" class="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-chart-column text-indigo-600"></i> Đơn vị có nhiều Lao động tiềm năng nhất
+            </h3>
+            <span class="text-[11px] text-slate-400">Top 5 (theo QTT hoặc số xác minh)</span>
+          </div>
+          <div class="h-64 relative">
+            <canvas id="chart-top-unjoined"></canvas>
+          </div>
+          <p class="text-[11px] text-slate-400 text-center mt-3">Số lao động tiềm năng = số LĐ trên QTT Thuế chưa tham gia, hoặc số do cán bộ xác minh nhập (lấy số lớn hơn).</p>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 rounded-2xl p-4 border border-sky-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-start space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex-shrink-0 flex items-center justify-center text-lg shadow-sm">
+            <i class="fa-solid fa-handshake-angle"></i>
+          </div>
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800">Cơ chế rà soát & chuẩn hóa dữ liệu</h4>
+            <p class="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-relaxed">
+              MST được chuẩn hóa (bù số 0 bị Excel làm mất, tách MST chi nhánh 13 số, nhận diện MST hộ KD là số định danh 12 số). Trùng MST với đơn vị đang đóng → <strong>Đã tham gia</strong>; chỉ trùng MST đơn vị mẹ/chi nhánh hoặc trùng tên → <strong>Nghi vấn</strong> (không tự kết luận). Lao động QTT được so theo Mã số BHXH → CCCD → Họ tên + Năm sinh + Đơn vị.
+            </p>
+          </div>
+        </div>
+        <button id="btn-go-to-units" class="whitespace-nowrap px-3.5 py-2 text-xs font-semibold text-white bg-sky-700 hover:bg-sky-800 rounded-xl shadow-sm transition">
+          <i class="fa-solid fa-magnifying-glass mr-1"></i> Rà soát Đơn vị ngay
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: RÀ SOÁT ĐƠN VỊ ==================== -->
+    <section id="tab-units" class="tab-content hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+          <div class="lg:col-span-3 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="unit-search" placeholder="Tìm MST, Tên, Chủ hộ, CCCD..."
+                   class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50/50">
+          </div>
+          <div class="lg:col-span-2">
+            <select id="unit-filter-type" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50 font-medium text-slate-700">
+              <option value="ALL">-- Tất cả loại hình --</option>
+              <option value="DOANH_NGHIEP">Doanh nghiệp</option>
+              <option value="HO_KINH_DOANH">Hộ kinh doanh</option>
+            </select>
+          </div>
+          <div class="lg:col-span-3">
+            <select id="unit-filter-bhxh-status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50">
+              <option value="ALL">-- Tất cả trạng thái BHXH --</option>
+              <option value="CAN_XU_LY" selected>Cần xử lý (Chưa TG + Nghi vấn + Ngừng đóng)</option>
+              <option value="CHUA_THAM_GIA">Chưa tham gia BHXH</option>
+              <option value="NGHI_VAN">Nghi vấn (MST chi nhánh / trùng tên)</option>
+              <option value="NGUNG_DONG">Có mã ĐV nhưng đang ngừng đóng</option>
+              <option value="DA_THAM_GIA">Đã tham gia BHXH</option>
+            </select>
+          </div>
+          <div class="lg:col-span-2">
+            <select id="unit-filter-active-status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50">
+              <option value="ALL">-- Tình trạng thực tế --</option>
+              <option value="DANG_HOAT_DONG">Đang hoạt động</option>
+              <option value="TAM_NGUNG_KD">Tạm ngừng kinh doanh</option>
+              <option value="GIAI_THE_PHA_SAN">Giải thể / Nghỉ kinh doanh</option>
+              <option value="KHONG_CON_TAI_DIA_CHI">Không còn tại địa chỉ</option>
+            </select>
+          </div>
+          <div class="lg:col-span-2">
+            <select id="unit-filter-action-status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50">
+              <option value="ALL">-- Tiến độ vận động --</option>
+              <option value="CHUA_TIEP_CAN">Chưa tiếp cận</option>
+              <option value="DA_GUI_THONG_BAO">Đã gửi thông báo</option>
+              <option value="DA_LAP_BIEN_BAN">Đã lập biên bản</option>
+              <option value="CO_GIAI_TRINH">Đơn vị có giải trình</option>
+              <option value="CAN_XEM_XET">Giải trình cần xem xét lại</option>
+              <option value="DA_DANG_KY_THANH_CONG">Đã đăng ký tham gia</option>
+              <option value="CHUYEN_THANH_TRA">Chuyển Thanh tra</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 text-xs gap-3">
+          <div class="text-slate-500">
+            Hiển thị <span id="label-unit-count" class="font-bold text-slate-800">0</span> đơn vị phù hợp tiêu chí lọc
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-batch-notice" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition flex items-center gap-1.5">
+              <i class="fa-solid fa-envelope text-amber-600"></i> Gán "Đã gửi thông báo" mục chọn
+            </button>
+            <button id="btn-reset-unit-filter" class="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-xs transition">
+              <i class="fa-solid fa-rotate-left mr-1"></i> Xóa lọc
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-3 w-9 text-center"><input type="checkbox" id="check-all-units" class="rounded text-sky-600 focus:ring-sky-500"></th>
+                <th class="py-3 px-3">Mã số thuế (MST)</th>
+                <th class="py-3 px-3">Tên Doanh Nghiệp / Đơn Vị</th>
+                <th class="py-3 px-3">Người ĐDPL / Chủ hộ</th>
+                <th class="py-3 px-3">Địa chỉ kinh doanh</th>
+                <th class="py-3 px-3">Đối soát CSDL BHXH</th>
+                <th class="py-3 px-3">Tình trạng thực tế</th>
+                <th class="py-3 px-3">Giải trình của đơn vị</th>
+                <th class="py-3 px-3">Tiến độ vận động</th>
+                <th class="py-3 px-3 text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="table-units-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div id="unit-empty-state" class="hidden py-12 text-center">
+          <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400 text-xl mb-2"><i class="fa-solid fa-building-circle-exclamation"></i></div>
+          <p class="text-xs sm:text-sm font-semibold text-slate-700">Không có đơn vị nào phù hợp bộ lọc</p>
+          <p class="text-[11px] text-slate-400 mt-1">Hãy nạp file danh mục đơn vị hoặc bấm "Nạp số liệu mẫu" để thử nghiệm.</p>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-500">
+          <div id="unit-pagination-info">Trang 1 / 1</div>
+          <div class="flex items-center gap-1">
+            <button id="btn-unit-prev" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50">Trước</button>
+            <button id="btn-unit-next" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50">Sau</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: RÀ SOÁT LAO ĐỘNG ==================== -->
+    <section id="tab-employees" class="tab-content hidden space-y-4">
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+          <div class="lg:col-span-4 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="emp-search" placeholder="Tìm theo Tên NLĐ, CCCD, Tên đơn vị, MST..."
+                   class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-slate-50/50">
+          </div>
+          <div class="lg:col-span-3">
+            <select id="emp-filter-status" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50">
+              <option value="ALL">-- Tất cả trạng thái BHXH --</option>
+              <option value="CAN_XU_LY" selected>Cần xử lý (Chưa TG, Nghi vấn, Khác ĐV, Báo giảm)</option>
+              <option value="CHUA_THAM_GIA">Chưa tham gia BHXH</option>
+              <option value="NGHI_VAN">Nghi vấn (cần xác minh)</option>
+              <option value="KHAC_DON_VI">Đang tham gia tại đơn vị khác</option>
+              <option value="NGUNG_DONG">Đã báo giảm / ngừng đóng</option>
+              <option value="DONG_THAP">Đóng thấp hơn thu nhập</option>
+              <option value="DA_THAM_GIA">Đã tham gia BHXH</option>
+            </select>
+          </div>
+          <div class="lg:col-span-3">
+            <select id="emp-filter-source" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50">
+              <option value="ALL">-- Tất cả nguồn số liệu --</option>
+              <option value="THUE_QTT">Thuế (Quyết toán Thuế TNCN)</option>
+              <option value="SO_KH_DT">Sở KH-ĐT / Tài chính (DN mới)</option>
+              <option value="HO_KINH_DOANH">UBND Phường xã (Hộ kinh doanh)</option>
+            </select>
+          </div>
+          <div class="lg:col-span-2">
+            <select id="emp-filter-action" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/50">
+              <option value="ALL">-- Tiến độ vận động --</option>
+              <option value="CHUA_TIEP_CAN">Chưa tiếp cận</option>
+              <option value="DA_GUI_THONG_BAO">Đã gửi thông báo</option>
+              <option value="DA_LAP_BIEN_BAN">Đã lập biên bản</option>
+              <option value="DA_DANG_KY">Đã đăng ký tham gia</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between border-t border-slate-100 pt-3 text-xs gap-3">
+          <div class="text-slate-500">Hiển thị <span id="label-emp-count" class="font-bold text-slate-800">0</span> lao động phù hợp</div>
+          <button id="btn-reset-emp-filter" class="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-xs transition">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Xóa lọc
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-3">Họ và Tên NLĐ</th>
+                <th class="py-3 px-3">Số CCCD / CMND</th>
+                <th class="py-3 px-3">Năm sinh</th>
+                <th class="py-3 px-3">Đơn vị chi trả</th>
+                <th class="py-3 px-3">MST ĐV</th>
+                <th class="py-3 px-3">Nguồn</th>
+                <th class="py-3 px-3">Kết quả đối soát</th>
+                <th class="py-3 px-3">Kết luận xác minh</th>
+                <th class="py-3 px-3">Tiến độ vận động</th>
+              </tr>
+            </thead>
+            <tbody id="table-employees-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div id="emp-empty-state" class="hidden py-12 text-center">
+          <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400 text-xl mb-2"><i class="fa-solid fa-user-xmark"></i></div>
+          <p class="text-xs sm:text-sm font-semibold text-slate-700">Không có lao động phù hợp bộ lọc</p>
+        </div>
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-500">
+          <div id="emp-pagination-info">Trang 1 / 1</div>
+          <div class="flex items-center gap-1">
+            <button id="btn-emp-prev" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50">Trước</button>
+            <button id="btn-emp-next" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50">Sau</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: ĐƠN VỊ ĐÓNG THIẾU LAO ĐỘNG ==================== -->
+    <section id="tab-under" class="tab-content hidden space-y-4">
+      <div class="bg-purple-50/70 border border-purple-200 rounded-2xl p-4 text-xs text-purple-950 leading-relaxed">
+        <h4 class="font-bold flex items-center gap-1.5 text-sm mb-1"><i class="fa-solid fa-circle-info text-purple-600"></i> Đơn vị đã có mã BHXH nhưng có dấu hiệu đóng thiếu</h4>
+        <p>Nhóm theo MST đơn vị chi trả trên QTT Thuế, đối chiếu với đơn vị đang có mã tại BHXH: số LĐ nhận thu nhập trên QTT so với số LĐ đang đóng; số LĐ QTT chưa tham gia / đã báo giảm / đang đóng nơi khác; số LĐ có thu nhập bình quân cao hơn tiền lương đóng theo ngưỡng cấu hình. Bấm vào một dòng để xem danh sách lao động.</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-3">MST đơn vị</th>
+                <th class="py-3 px-3">Tên đơn vị</th>
+                <th class="py-3 px-3">Mã ĐV BHXH</th>
+                <th class="py-3 px-3 text-right">LĐ đang đóng</th>
+                <th class="py-3 px-3 text-right">LĐ trên QTT</th>
+                <th class="py-3 px-3 text-right">Chênh lệch</th>
+                <th class="py-3 px-3 text-right">Chưa TG</th>
+                <th class="py-3 px-3 text-right">Khác ĐV / Báo giảm</th>
+                <th class="py-3 px-3 text-right">Nghi vấn</th>
+                <th class="py-3 px-3 text-right">Đóng thấp</th>
+              </tr>
+            </thead>
+            <tbody id="table-under-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+        <div id="under-empty-state" class="hidden py-12 text-center text-xs text-slate-500">Chưa phát hiện đơn vị đóng thiếu (cần nạp CSDL đơn vị BHXH và dữ liệu QTT có cột MST đơn vị chi trả).</div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: NẠP DỮ LIỆU ==================== -->
+    <section id="tab-import" class="tab-content hidden space-y-5">
+      <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 text-xs text-blue-900 leading-relaxed">
+        <h4 class="font-bold flex items-center gap-1.5 text-sm mb-1 text-blue-950"><i class="fa-solid fa-circle-info text-sky-600"></i> Hướng dẫn nạp nguồn dữ liệu đối soát:</h4>
+        <ul class="list-disc list-inside mt-1.5 space-y-0.5 text-slate-700">
+          <li>Hỗ trợ <strong>.xlsx, .xls</strong> (kể cả file .xls dạng HTML xuất từ eTax/TMS), <strong>.csv/.txt</strong> (UTF-8 hoặc Windows-1258), tự chuyển font <strong>TCVN3 (ABC)</strong> sang Unicode.</li>
+          <li>Sau khi chọn file, hệ thống mở <strong>màn hình ghép cột</strong>: tự dò dòng tiêu đề (kể cả tiêu đề gộp 2 dòng, dòng đánh số (1)(2)(3)…), chọn trang tính, tự đoán cột. Bạn kiểm tra bản xem trước và sửa lại nếu cần; cấu trúc cột được ghi nhớ cho lần nạp sau.</li>
+          <li>MST/CCCD bị Excel làm mất số 0 ở đầu được tự bù lại. Nạp nhiều lần cùng một nguồn sẽ <strong>cập nhật theo khóa</strong> (MST / CCCD), không nhân đôi dòng; kết quả xác minh đã nhập được giữ nguyên.</li>
+          <li>Toàn bộ dữ liệu chỉ xử lý và lưu trong trình duyệt trên máy này (IndexedDB), không gửi lên máy chủ nào.</li>
+        </ul>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">1. CSDL Gốc Đơn Vị BHXH</span>
+              <span id="badge-file-bhxh-units" class="text-xs font-semibold text-slate-500">0 đơn vị</span>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800">Danh mục Đơn vị BHXH đang quản lý (EXPORTDMDONVI)</h4>
+            <p class="text-xs text-slate-500 mt-1">Cần: <em>Mã đơn vị, Tên đơn vị, Mã số thuế</em>. Nên có: <em>Số LĐ đang đóng, Trạng thái</em> (đơn vị tạm dừng/ngừng đóng sẽ được tách riêng).</p>
+            <div class="mt-3 border-2 border-dashed border-sky-200 hover:border-sky-400 bg-sky-50/30 rounded-xl p-5 text-center cursor-pointer transition dropzone" id="dz-bhxh-units">
+              <input type="file" id="file-bhxh-units" class="hidden" accept=".xlsx,.xls,.csv,.txt">
+              <div class="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center text-sky-600 mx-auto text-lg mb-1.5"><i class="fa-solid fa-building-user"></i></div>
+              <p class="text-xs font-semibold text-slate-700">Kéo thả file EXPORTDMDONVI hoặc <span class="text-sky-600 underline">chọn file</span></p>
+            </div>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px]">Mặc định: thay thế toàn bộ (bản chụp CSDL mới nhất)</span>
+            <button id="btn-clear-bhxh-units" class="text-rose-500 hover:text-rose-700 font-medium text-xs">Xóa dữ liệu</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">2. Nguồn Đối Soát Đơn Vị (Sở TC / Thuế / HKD)</span>
+              <span id="badge-file-ext-units" class="text-xs font-semibold text-slate-500">0 đơn vị</span>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800">Danh sách Doanh nghiệp mới & Hộ kinh doanh</h4>
+            <p class="text-xs text-slate-500 mt-1">Cần: <em>MST/Mã HKD, Tên</em>. Nên có: <em>Chủ hộ/Đại diện, CCCD, Địa chỉ, Số LĐ, Tình trạng, Phương pháp nộp thuế (kê khai/khoán)</em>.</p>
+            <div class="mt-3 border-2 border-dashed border-amber-200 hover:border-amber-400 bg-amber-50/30 rounded-xl p-5 text-center cursor-pointer transition dropzone" id="dz-ext-units">
+              <input type="file" id="file-ext-units" class="hidden" accept=".xlsx,.xls,.csv,.txt">
+              <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mx-auto text-lg mb-1.5"><i class="fa-solid fa-store"></i></div>
+              <p class="text-xs font-semibold text-slate-700">Kéo thả file Đơn vị / Hộ kinh doanh hoặc <span class="text-amber-600 underline">chọn file</span></p>
+            </div>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px]">Mặc định: cập nhật / bổ sung theo MST</span>
+            <button id="btn-clear-ext-units" class="text-rose-500 hover:text-rose-700 font-medium text-xs">Xóa dữ liệu</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">3. CSDL Gốc Lao Động BHXH</span>
+              <span id="badge-file-bhxh-emps" class="text-xs font-semibold text-slate-500">0 lao động</span>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800">Danh sách Người lao động đang tham gia (D02-TS / TST)</h4>
+            <p class="text-xs text-slate-500 mt-1">Cần: <em>Họ tên</em> và ít nhất một trong <em>Mã số BHXH / CCCD / Ngày sinh</em>. Nên có: <em>Mã đơn vị hoặc MST đơn vị, Trạng thái, Mức lương đóng</em>.</p>
+            <div class="mt-3 border-2 border-dashed border-emerald-200 hover:border-emerald-400 bg-emerald-50/30 rounded-xl p-5 text-center cursor-pointer transition dropzone" id="dz-bhxh-emps">
+              <input type="file" id="file-bhxh-emps" class="hidden" accept=".xlsx,.xls,.csv,.txt">
+              <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mx-auto text-lg mb-1.5"><i class="fa-solid fa-user-check"></i></div>
+              <p class="text-xs font-semibold text-slate-700">Kéo thả file Lao động BHXH hoặc <span class="text-emerald-600 underline">chọn file</span></p>
+            </div>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px]">Mặc định: thay thế toàn bộ</span>
+            <button id="btn-clear-bhxh-emps" class="text-rose-500 hover:text-rose-700 font-medium text-xs">Xóa dữ liệu</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">4. Nguồn Lao Động Ngoài (Thuế QTT / Hộ KD)</span>
+              <span id="badge-file-ext-emps" class="text-xs font-semibold text-slate-500">0 lao động</span>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800">Dữ liệu Quyết toán Thuế TNCN (Cơ quan Thuế cung cấp)</h4>
+            <p class="text-xs text-slate-500 mt-1">Cần: <em>Họ tên, CCCD/MST cá nhân, MST đơn vị chi trả</em> (nếu file là bảng kê của 1 đơn vị, nhập MST mặc định ở màn hình ghép cột). Nên có: <em>Năm sinh, Tổng thu nhập chịu thuế, Số tháng</em>.</p>
+            <div class="mt-3 border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/30 rounded-xl p-5 text-center cursor-pointer transition dropzone" id="dz-ext-emps">
+              <input type="file" id="file-ext-emps" class="hidden" accept=".xlsx,.xls,.csv,.txt">
+              <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mx-auto text-lg mb-1.5"><i class="fa-solid fa-users-gear"></i></div>
+              <p class="text-xs font-semibold text-slate-700">Kéo thả file Quyết toán Thuế hoặc <span class="text-purple-600 underline">chọn file</span></p>
+            </div>
+          </div>
+          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px]">Mặc định: cập nhật / bổ sung theo CCCD + đơn vị</span>
+            <button id="btn-clear-ext-emps" class="text-rose-500 hover:text-rose-700 font-medium text-xs">Xóa dữ liệu</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h5 class="text-xs sm:text-sm font-bold text-slate-800">Tải biểu mẫu Excel chuẩn (.xlsx):</h5>
+          <p class="text-xs text-slate-500">Dùng khi nguồn dữ liệu không có cấu trúc cố định.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-download-unit-template" class="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition flex items-center gap-1.5"><i class="fa-solid fa-download text-sky-600"></i> Mẫu Doanh nghiệp</button>
+          <button id="btn-download-hkd-template" class="px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-xs font-semibold text-amber-800 transition flex items-center gap-1.5"><i class="fa-solid fa-download text-amber-600"></i> Mẫu Hộ Kinh Doanh</button>
+          <button id="btn-download-emp-template" class="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition flex items-center gap-1.5"><i class="fa-solid fa-download text-emerald-600"></i> Mẫu Lao động QTT</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 6: CẤU HÌNH ==================== -->
+    <section id="tab-settings" class="tab-content hidden space-y-5">
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm max-w-3xl space-y-4">
+        <h4 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+          <i class="fa-solid fa-sliders text-sky-600"></i> Tiêu chí Thuật toán So khớp
+        </h4>
+
+        <div class="space-y-3">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block">1. Đối soát Đơn vị:</span>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+            <p class="text-xs font-bold text-slate-800">Chuẩn hóa Mã số thuế (luôn bật)</p>
+            <p class="text-[11px] text-slate-500">Bỏ ký tự thừa, bù số 0 bị mất, tách MST chi nhánh (10 số + 3 số), nhận diện MST hộ KD là số định danh cá nhân 12 số. Trùng MST mẹ/chi nhánh → Nghi vấn.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-bold text-slate-800">Cảnh báo nghi vấn theo Tên Đơn vị (trường hợp sai / thiếu MST)</p>
+              <p class="text-[11px] text-slate-500">Bỏ loại hình (Công ty, TNHH, CP, Hộ KD...), so độ giống tên; đạt ngưỡng → gắn "Nghi vấn", không tự kết luận đã tham gia.</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <input type="number" id="cfg-fuzzy-threshold" min="60" max="100" value="85" class="w-16 px-2 py-1 rounded-lg border border-slate-200 text-xs"><span class="text-xs">%</span>
+              <input type="checkbox" id="cfg-unit-fuzzy-name" checked class="w-4 h-4 rounded text-sky-600">
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-2">
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block">2. Đối soát Người lao động:</span>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-bold text-slate-800">So khớp theo Mã số BHXH / Số CCCD (12 số) / CMND (9 số)</p>
+              <p class="text-[11px] text-slate-500">Tự bù số 0 đầu bị mất. Nếu người lao động đang đóng ở đơn vị khác MST chi trả → "Khác đơn vị".</p>
+            </div>
+            <input type="checkbox" id="cfg-emp-cccd" checked class="w-4 h-4 rounded text-sky-600 shrink-0">
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-bold text-slate-800">Khớp Họ tên + Năm sinh (khi thiếu CCCD)</p>
+              <p class="text-[11px] text-slate-500">Chỉ kết luận "Đã tham gia" khi trùng cả đơn vị; các trường hợp còn lại gắn "Nghi vấn" để xác minh.</p>
+            </div>
+            <input type="checkbox" id="cfg-emp-name-dob" checked class="w-4 h-4 rounded text-sky-600 shrink-0">
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-bold text-slate-800">Ngưỡng cảnh báo đóng thấp hơn thu nhập</p>
+              <p class="text-[11px] text-slate-500">Thu nhập chịu thuế bình quân tháng (QTT) cao hơn mức lương đóng BHXH từ ngưỡng này trở lên → cảnh báo (chỉ mang tính tham khảo).</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <input type="number" id="cfg-income-gap" min="0" max="95" value="30" class="w-16 px-2 py-1 rounded-lg border border-slate-200 text-xs"><span class="text-xs">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end">
+          <button id="btn-apply-settings" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-2">
+            <i class="fa-solid fa-arrows-rotate"></i> Áp dụng & chạy lại đối soát (giữ nguyên kết quả xác minh)
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm max-w-3xl space-y-3">
+        <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2"><i class="fa-solid fa-database text-sky-600"></i> Quản lý dữ liệu phiên làm việc</h4>
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span class="text-slate-600">Cấu trúc cột đã ghi nhớ: <strong id="label-profile-count">0</strong></span>
+          <button id="btn-clear-profiles" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700">Xóa cấu trúc đã nhớ</button>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span class="text-slate-600">Dữ liệu và kết quả xác minh được lưu trong trình duyệt của máy này. <span id="label-storage-status" class="text-slate-400"></span></span>
+          <button id="btn-clear-all" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold">Xóa toàn bộ dữ liệu</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODAL: GHÉP CỘT KHI NẠP FILE ==================== -->
+  <div id="modal-mapping" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-5xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[94vh] flex flex-col">
+      <div class="bg-gradient-to-r from-blue-900 via-sky-800 to-indigo-900 text-white px-5 py-3.5 flex items-center justify-between">
+        <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-table-columns"></i> Ghép cột dữ liệu — <span id="map-title">--</span></h3>
+        <button id="btn-close-mapping" class="text-white/80 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-5 space-y-4 overflow-y-auto text-xs flex-1">
+        <div class="text-slate-500">File: <strong id="map-file" class="text-slate-700">--</strong> <span id="map-tcvn3" class="hidden ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">Đã chuyển font TCVN3 → Unicode</span> <span id="map-profile" class="hidden ml-2 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">Dùng cấu trúc cột đã ghi nhớ</span></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <label class="block"><span class="font-semibold text-slate-700 block mb-1">Trang tính</span><select id="map-sheet" class="w-full px-2 py-1.5 rounded-lg border border-slate-200"></select></label>
+          <label class="block"><span class="font-semibold text-slate-700 block mb-1">Dòng tiêu đề</span><input id="map-header-row" type="number" min="1" class="w-full px-2 py-1.5 rounded-lg border border-slate-200"></label>
+          <label class="block" id="map-source-wrap"><span class="font-semibold text-slate-700 block mb-1">Nguồn dữ liệu</span><select id="map-source" class="w-full px-2 py-1.5 rounded-lg border border-slate-200"></select></label>
+          <label class="block"><span class="font-semibold text-slate-700 block mb-1">Chế độ nạp</span>
+            <select id="map-mode" class="w-full px-2 py-1.5 rounded-lg border border-slate-200">
+              <option value="MERGE">Cập nhật / bổ sung theo khóa</option>
+              <option value="REPLACE">Thay thế toàn bộ dữ liệu cũ</option>
+            </select></label>
+          <label class="block" id="map-default-mst-wrap"><span class="font-semibold text-slate-700 block mb-1">MST đơn vị mặc định</span><input id="map-default-mst" type="text" placeholder="Nếu file là bảng kê của 1 ĐV" class="w-full px-2 py-1.5 rounded-lg border border-slate-200"></label>
+        </div>
+        <div>
+          <h5 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-2">Ghép trường ↔ cột trong file <span class="font-normal normal-case text-slate-400">(* bắt buộc)</span></h5>
+          <div id="map-fields" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+        </div>
+        <div id="map-stats" class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600"></div>
+        <div>
+          <h5 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-2">Xem trước dữ liệu sau chuẩn hóa (8 dòng đầu)</h5>
+          <div class="overflow-x-auto border border-slate-200 rounded-lg"><table class="w-full text-left text-[11px]" id="map-preview"></table></div>
+        </div>
+      </div>
+      <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <label class="flex items-center gap-2 text-slate-600"><input type="checkbox" id="map-remember" checked class="rounded"> Ghi nhớ cấu trúc cột này cho lần sau</label>
+        <div class="flex items-center gap-2">
+          <button id="btn-cancel-mapping" class="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-medium">Hủy</button>
+          <button id="btn-confirm-mapping" class="px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition">Nạp dữ liệu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CHI TIẾT ĐƠN VỊ ==================== -->
+  <div id="modal-unit-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col">
+      <div class="bg-gradient-to-r from-blue-900 via-sky-800 to-indigo-900 text-white px-5 py-3.5 flex items-center justify-between">
+        <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-building-circle-check"></i> Chi tiết Đơn vị & Cập nhật Kết quả Xác minh</h3>
+        <button id="btn-close-unit-modal" class="text-white/80 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-5 space-y-4 overflow-y-auto text-xs flex-1">
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div class="col-span-2 sm:col-span-2">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Tên đơn vị / Hộ kinh doanh:</span>
+            <span id="m-unit-name" class="font-bold text-slate-800 text-sm">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Mã số thuế:</span>
+            <span id="m-unit-mst" class="font-mono font-bold text-sky-700 text-sm">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Người ĐD / Chủ hộ:</span>
+            <span id="m-unit-rep" class="font-semibold text-slate-700">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Số điện thoại:</span>
+            <span id="m-unit-phone" class="font-semibold text-slate-700">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Ngày cấp / PP nộp thuế:</span>
+            <span id="m-unit-date" class="font-semibold text-slate-700">--</span>
+          </div>
+          <div class="col-span-2 sm:col-span-3">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Địa chỉ đăng ký:</span>
+            <span id="m-unit-address" class="font-medium text-slate-700">--</span>
+          </div>
+          <div class="col-span-2 sm:col-span-3 pt-2 border-t border-slate-200 space-y-1">
+            <div><span class="text-slate-400 text-[10px] uppercase font-bold mr-1">Đối chiếu CSDL BHXH:</span> <span id="m-unit-bhxh-match-badge">--</span></div>
+            <div id="m-unit-match-note" class="text-[11px] text-slate-600"></div>
+            <div id="m-unit-qtt" class="text-[11px] text-slate-600"></div>
+          </div>
+        </div>
+
+        <div id="m-unit-hints" class="hidden p-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 space-y-1"></div>
+
+        <div class="space-y-3 pt-1">
+          <h5 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5"><i class="fa-solid fa-clipboard-check text-sky-600"></i> Cập nhật tình trạng thực tế & Giải trình đơn vị</h5>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1">1. Tình trạng hoạt động thực tế:</label>
+              <select id="m-unit-active-select" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white">
+                <option value="DANG_HOAT_DONG">Đang hoạt động bình thường</option>
+                <option value="TAM_NGUNG_KD">Tạm ngừng kinh doanh (Có thông báo)</option>
+                <option value="GIAI_THE_PHA_SAN">Đã giải thể / Phá sản / Thu hồi GPKD</option>
+                <option value="KHONG_CON_TAI_DIA_CHI">Không còn hoạt động tại địa chỉ đăng ký</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1">2. Tiến độ tiếp cận & Vận động:</label>
+              <select id="m-unit-action-select" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white">
+                <option value="CHUA_TIEP_CAN">Chưa tiếp cận cơ sở</option>
+                <option value="DA_GUI_THONG_BAO">Đã gửi thông báo rà soát lần 1/2</option>
+                <option value="DA_LAP_BIEN_BAN">Đã đến cơ sở & Lập biên bản làm việc</option>
+                <option value="CO_GIAI_TRINH">Đơn vị có văn bản giải trình</option>
+                <option value="DA_DANG_KY_THANH_CONG">Đã đăng ký tham gia (Thành công)</option>
+                <option value="CHUYEN_THANH_TRA">Cố tình trốn đóng &rarr; Chuyển Thanh tra</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">3. Lý do giải trình của đơn vị (về việc chưa tham gia BHXH):</label>
+            <select id="m-unit-explanation-type" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white">
+              <option value="KHONG_CO">Không có giải trình / Chưa làm việc</option>
+              <option value="CHU_HO_DONG_NOI_KHAC">Hộ KD: Chủ hộ đã tham gia BHXH bắt buộc tại cơ quan / doanh nghiệp khác</option>
+              <option value="HKD_KHONG_THUE_LAO_DONG">Hộ KD: Hộ gia đình tự làm, không thuê mướn lao động</option>
+              <option value="CHUA_CO_LAO_DONG">DN mới lập, chưa có NLĐ (chỉ người quản lý / chủ DN tự làm)</option>
+              <option value="LAO_DONG_THOI_VU">Chỉ sử dụng lao động có HĐLĐ dưới 1 tháng</option>
+              <option value="DONG_NOI_KHAC">Người lao động đã tham gia BHXH tại nơi làm việc khác</option>
+              <option value="CAM_KET_THANG_SAU">Cam kết hoàn tất thủ tục đăng ký vào tháng sau</option>
+              <option value="LY_DO_KHAC">Lý do giải trình khác (Ghi rõ bên dưới)</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1">Cán bộ phụ trách quản lý thu:</label>
+              <input type="text" id="m-unit-officer" placeholder="Ví dụ: Nguyễn Văn Nam - Tổ Thu 1" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white">
+            </div>
+            <div>
+              <label class="block text-slate-700 font-semibold mb-1">Số lao động dự kiến phát triển (xác minh):</label>
+              <input type="number" min="0" id="m-unit-potential-count" placeholder="Để trống nếu chưa xác minh" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Nhật ký diễn biến làm việc & Ghi chú:</label>
+            <textarea id="m-unit-notes" rows="3" placeholder="Tóm tắt ý kiến làm việc, cam kết thời hạn, lý do cụ thể..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2">
+          <button id="btn-print-unit-minute" class="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5"><i class="fa-solid fa-file-contract text-sky-600"></i> In biên bản làm việc</button>
+          <button id="btn-unit-view-qtt" class="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5"><i class="fa-solid fa-users text-indigo-600"></i> Xem LĐ theo QTT</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-cancel-unit-modal" class="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-medium">Đóng</button>
+          <button id="btn-save-unit-modal" class="px-4 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-sm transition">Lưu cập nhật</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="printable-report" class="hidden bg-white p-8 text-black text-sm max-w-4xl mx-auto space-y-4 font-serif">
+    <div class="grid grid-cols-2 text-center text-xs">
+      <div>
+        <p class="font-bold uppercase">BẢO HIỂM XÃ HỘI TỈNH / HUYỆN</p>
+        <p class="font-bold underline uppercase">TỔ QUẢN LÝ THU & PHÁT TRIỂN ĐỐI TƯỢNG</p>
+        <p class="mt-1">Số: ......./BB-BHXH</p>
+      </div>
+      <div>
+        <p class="font-bold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+        <p class="font-bold underline">Độc lập - Tự do - Hạnh phúc</p>
+        <p class="mt-1 italic" id="print-date">Ngày ..... tháng ..... năm .....</p>
+      </div>
+    </div>
+    <div class="text-center py-4">
+      <h2 class="font-bold text-base uppercase">BIÊN BẢN LÀM VIỆC</h2>
+      <p class="italic text-xs">V/v: Rà soát, xác minh tình hình tham gia BHXH, BHYT, BHTN của đơn vị theo dữ liệu đối soát liên ngành</p>
+    </div>
+    <div class="space-y-2 text-xs leading-relaxed">
+      <p>Hôm nay, vào lúc ..... giờ ..... ngày ..... tháng ..... năm ........, tại địa chỉ: <span id="print-unit-address" class="font-semibold underline">....................................................................</span></p>
+      <p class="font-bold">I. ĐẠI DIỆN CƠ QUAN BẢO HIỂM XÃ HỘI:</p>
+      <p>- Ông/Bà: <span id="print-officer-name" class="font-semibold">....................................................</span> Chức vụ: Cán bộ Tổ Quản lý Thu</p>
+      <p>- Ông/Bà: .................................................... Chức vụ: ................................................................</p>
+      <p class="font-bold mt-2">II. ĐẠI DIỆN ĐƠN VỊ / HỘ KINH DOANH ĐƯỢC RÀ SOÁT:</p>
+      <p>- Tên đơn vị: <span id="print-unit-name" class="font-bold text-sm uppercase">....................................................................................................</span></p>
+      <p>- Mã số thuế (MST): <span id="print-unit-mst" class="font-bold">................................................</span> Điện thoại: <span id="print-unit-phone">................................</span></p>
+      <p>- Người đại diện pháp luật / Chủ hộ: <span id="print-unit-rep" class="font-semibold">....................................................</span> Chức vụ: ........................</p>
+      <p class="font-bold mt-2">III. NỘI DUNG VÀ KẾT QUẢ LÀM VIỆC:</p>
+      <p>1. Tình trạng hoạt động thực tế của đơn vị: <span id="print-active-status" class="font-bold underline">....................................................</span></p>
+      <p>2. Số lao động đang làm việc tại đơn vị: ............. người (Trong đó số thuộc diện tham gia BHXH bắt buộc: ............. người).</p>
+      <p>3. Tình hình tham gia BHXH, BHYT, BHTN: <span id="print-bhxh-status" class="font-bold underline">....................................................</span></p>
+      <p>4. Ý kiến giải trình của Đơn vị:</p>
+      <div id="print-unit-explanation" class="p-2 border border-black/40 min-h-[60px] italic">....................................................................................................</div>
+      <p>5. Kết luận & Cam kết của Đơn vị:</p>
+      <p>- Đơn vị cam kết nộp hồ sơ báo tăng tham gia BHXH, BHYT, BHTN cho người lao động đúng quy định trước ngày: ........./........./.........</p>
+    </div>
+    <div class="grid grid-cols-2 text-center pt-8 text-xs">
+      <div><p class="font-bold uppercase">ĐẠI DIỆN ĐƠN VỊ / HỘ KINH DOANH</p><p class="italic text-[10px]">(Ký, ghi rõ họ tên và đóng dấu nếu có)</p></div>
+      <div><p class="font-bold uppercase">ĐẠI DIỆN CƠ QUAN BẢO HIỂM XÃ HỘI</p><p class="italic text-[10px]">(Ký và ghi rõ họ tên)</p></div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       LÕI XỬ LÝ DỮ LIỆU (thuần JavaScript, không phụ thuộc giao diện)
+       — được kiểm thử tự động tại tests/raSoatCore.test.js
+       ===================================================================== -->
+  <script id="ra-soat-core">
+  (function (root) {
+    'use strict';
+
+    // ---------------------------------------------------------------- Chuỗi
+    function isDate(v) { return Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime()); }
+    function isEmpty(v) { return v === null || v === undefined || (typeof v === 'string' && v.trim() === ''); }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function normalizeVN(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+    function normHeader(str) { return normalizeVN(str).replace(/[^a-z0-9]+/g, ' ').trim(); }
+    function nameKey(str) { return normalizeVN(str).replace(/[^a-z ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+    function normCode(str) { return String(str === null || str === undefined ? '' : str).replace(/\s+/g, '').toUpperCase(); }
+
+    // Excel serial date → Date (UTC)
+    function excelSerialToDate(n) { return new Date(Math.round((n - 25569) * 86400000)); }
+    // SheetJS có thể trả về Date lệch vài phút sang ngày hôm trước do múi giờ lịch sử → cộng 12 giờ trước khi đọc.
+    function safeLocal(d) { return new Date(d.getTime() + 12 * 3600 * 1000); }
+
+    function toDateString(v) {
+      if (isDate(v)) { const d = safeLocal(v); return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear(); }
+      if (typeof v === 'number' && v > 20000 && v < 80000) {
+        const d = excelSerialToDate(v);
+        return pad2(d.getUTCDate()) + '/' + pad2(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
+      }
+      return cleanText(v);
+    }
+    function cleanText(v) {
+      if (v === null || v === undefined) return '';
+      if (isDate(v)) return toDateString(v);
+      return String(v).replace(/\s+/g, ' ').trim();
+    }
+
+    function parseYear(v) {
+      const maxY = new Date().getFullYear() + 1;
+      let y = null;
+      if (isEmpty(v)) return null;
+      if (isDate(v)) y = safeLocal(v).getFullYear();
+      else if (typeof v === 'number') {
+        if (v >= 1900 && v <= maxY) y = Math.trunc(v);
+        else if (v > 366 && v < 80000) y = excelSerialToDate(v).getUTCFullYear();
+      } else {
+        const s = String(v).trim();
+        const m = s.match(/(?:^|\D)((?:19|20)\d{2})(?!\d)/);
+        if (m) y = parseInt(m[1], 10);
+        else if (/^\d{5}(\.\d+)?$/.test(s)) y = excelSerialToDate(parseFloat(s)).getUTCFullYear();
+      }
+      return y && y >= 1900 && y <= maxY ? y : null;
+    }
+
+    function parseNumber(v) {
+      if (isEmpty(v)) return null;
+      if (typeof v === 'number') return isFinite(v) ? v : null;
+      const s = String(v).replace(/\s/g, '');
+      // "12.500.000" / "12,500,000" / "12500000,5"
+      const cleaned = /^-?\d{1,3}([.,]\d{3})+$/.test(s) ? s.replace(/[.,]/g, '') : s.replace(/,/g, '.');
+      const n = parseFloat(cleaned.replace(/[^0-9.\-]/g, ''));
+      return isFinite(n) ? n : null;
+    }
+    function parseCount(v) { const n = parseNumber(v); return n === null ? null : Math.max(0, Math.round(n)); }
+
+    // ------------------------------------------------------ Font TCVN3 (ABC)
+    const TCVN3 = {
+      '¡': 'Ă', '¢': 'Â', '£': 'Ê', '¤': 'Ô', '¥': 'Ơ', '¦': 'Ư', '§': 'Đ',
+      '¨': 'ă', '©': 'â', 'ª': 'ê', '«': 'ô', '¬': 'ơ', '­': 'ư', '®': 'đ',
+      'µ': 'à', '¶': 'ả', '·': 'ã', '¸': 'á', '¹': 'ạ',
+      '»': 'ằ', '¼': 'ẳ', '½': 'ẵ', '¾': 'ắ', 'Æ': 'ặ',
+      'Ç': 'ầ', 'È': 'ẩ', 'É': 'ẫ', 'Ê': 'ấ', 'Ë': 'ậ',
+      'Ì': 'è', 'Î': 'ẻ', 'Ï': 'ẽ', 'Ð': 'é', 'Ñ': 'ẹ',
+      'Ò': 'ề', 'Ó': 'ể', 'Ô': 'ễ', 'Õ': 'ế', 'Ö': 'ệ',
+      '×': 'ì', 'Ø': 'ỉ', 'Ü': 'ĩ', 'Ý': 'í', 'Þ': 'ị',
+      'ß': 'ò', 'á': 'ỏ', 'â': 'õ', 'ã': 'ó', 'ä': 'ọ',
+      'å': 'ồ', 'æ': 'ổ', 'ç': 'ỗ', 'è': 'ố', 'é': 'ộ',
+      'ê': 'ờ', 'ë': 'ở', 'ì': 'ỡ', 'í': 'ớ', 'î': 'ợ',
+      'ï': 'ù', 'ñ': 'ủ', 'ò': 'ũ', 'ó': 'ú', 'ô': 'ụ',
+      'õ': 'ừ', 'ö': 'ử', '÷': 'ữ', 'ø': 'ứ', 'ù': 'ự',
+      'ú': 'ỳ', 'û': 'ỷ', 'ü': 'ỹ', 'ý': 'ý', 'þ': 'ỵ'
+    };
+    // Ký tự chỉ xuất hiện trong TCVN3, không có trong tiếng Việt Unicode
+    const TCVN3_STRONG = new Set(Object.keys(TCVN3).filter(c => !/[àáâãèéêìíòóôõùúýÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝ]/.test(c)));
+    const UNICODE_VN = /[ăđơưĂĐƠƯẠ-ỹ]/;
+
+    function looksLikeTCVN3(texts) {
+      let strong = 0, uni = 0;
+      for (const t of texts) {
+        const s = String(t);
+        for (const ch of s) { if (TCVN3_STRONG.has(ch)) strong++; else if (UNICODE_VN.test(ch)) uni++; }
+      }
+      return strong >= 3 && strong > uni * 3;
+    }
+    function tcvn3ToUnicode(s) {
+      if (typeof s !== 'string') return s;
+      let out = '';
+      for (const ch of s) out += TCVN3[ch] || ch;
+      return out;
+    }
+
+    // --------------------------------------------------------- MST & CCCD
+    const EMPTY_MST = Object.freeze({ key: '', parent: '', branch: '', kind: '' });
+
+    // Chuẩn hóa MST: bù số 0 bị Excel làm mất, tách MST chi nhánh, nhận diện MST HKD = số định danh 12 số.
+    function normalizeMST(v) {
+      if (isEmpty(v)) return EMPTY_MST;
+            let s = typeof v === 'number' ? String(Math.round(v)) : String(v).trim();
+      s = s.replace(/[\s.]/g, '');
+      let parent = '', branch = '';
+      const m = s.match(/(\d{8,10})-(\d{1,3})(?!\d)/);
+      if (m) {
+        parent = m[1].padStart(10, '0'); branch = m[2].padStart(3, '0');
+      } else {
+        const d = s.replace(/\D/g, '');
+        if (!d) return EMPTY_MST;
+        if (d.length === 12 && d[0] === '0') return { key: d, parent: d, branch: '', kind: 'CCCD' };
+        if (d.length === 11) { const c = '0' + d; return { key: c, parent: c, branch: '', kind: 'CCCD' }; } // CCCD mất số 0 đầu
+        if (d.length === 13) { parent = d.slice(0, 10); branch = d.slice(10); }
+        else if (d.length === 12) { parent = '0' + d.slice(0, 9); branch = d.slice(9); } // MST 13 số mất số 0 đầu
+        else if (d.length === 10) parent = d;
+        else if (d.length === 9) parent = '0' + d;
+        else return { key: d, parent: d, branch: '', kind: 'KHAC' };
+      }
+      if (branch === '000') branch = '';
+      return { key: branch ? parent + '-' + branch : parent, parent: parent, branch: branch, kind: 'MST' };
+    }
+
+    // Chuẩn hóa CCCD (12 số) / CMND (9 số)
+    function normalizePersonId(v) {
+      if (isEmpty(v)) return { key: '', kind: '' };
+      let d = typeof v === 'number' ? String(Math.round(v)) : String(v).replace(/\D/g, '');
+      if (d.length === 11) d = '0' + d;
+      if (d.length === 8) d = '0' + d;
+      if (d.length === 12) return { key: d, kind: 'CCCD' };
+      if (d.length === 9) return { key: d, kind: 'CMND' };
+      return { key: '', kind: d ? 'KHONG_HOP_LE' : '' };
+    }
+    function normalizeBhxhCode(v) {
+      if (isEmpty(v)) return '';
+      let d = typeof v === 'number' ? String(Math.round(v)) : String(v).replace(/\D/g, '');
+      if (d.length === 9) d = '0' + d;
+      return d.length === 10 ? d : '';
+    }
+
+    const INACTIVE_WORDS = ['ngung', 'tam dung', 'giai the', 'pha san', 'bao giam', 'da giam', 'dung dong', 'cham dut', 'khoa so', 'chuyen di', 'nghi viec', 'da nghi', 'thu hoi'];
+    function isInactiveStatus(raw) {
+      const n = normalizeVN(raw);
+      if (!n) return false;
+      return INACTIVE_WORDS.some(w => n.includes(w));
+    }
+    function mapActiveStatus(raw) {
+      const n = normalizeVN(raw);
+      if (!n) return null;
+      if (/giai the|pha san|thu hoi|cham dut|da dong ma|dong ma so thue|ngung hoat dong/.test(n)) return 'GIAI_THE_PHA_SAN';
+      if (/tam ngung|tam dung|tam nghi/.test(n)) return 'TAM_NGUNG_KD';
+      if (/khong con|khong hoat dong tai|bo dia chi|khong tim thay/.test(n)) return 'KHONG_CON_TAI_DIA_CHI';
+      if (/hoat dong|dang kinh doanh|binh thuong/.test(n)) return 'DANG_HOAT_DONG';
+      return null;
+    }
+    function mapTaxMethod(raw) {
+      const n = normalizeVN(raw);
+      if (!n) return '';
+      if (n.includes('ke khai')) return 'KE_KHAI';
+      if (n.includes('khoan')) return 'KHOAN';
+      if (n.includes('tung lan')) return 'TUNG_LAN';
+      return '';
+    }
+
+    // Bỏ loại hình / từ chung để so tên đơn vị
+    const LEGAL_WORDS = [
+      'trach nhiem huu han', 'mot thanh vien', 'hai thanh vien tro len', 'hai thanh vien', 'doanh nghiep tu nhan', 'ho kinh doanh', 'van phong dai dien',
+      'hop tac xa', 'xuat nhap khau', 'thuong mai', 'dich vu', 'san xuat', 'cong ty', 'co phan', 'chi nhanh', 'dia diem kinh doanh', 'ho kd',
+      'cty', 'tnhh', 'ctcp', 'mtv', 'dntn', 'hkd', 'vpdd', 'htx', 'xnk', 'tm', 'dv', 'sx', 'cp', 'cn', 'va', 'tai', 'thanh pho', 'tp'
+    ];
+    const LEGAL_RE = new RegExp('(^| )(' + LEGAL_WORDS.map(w => w.replace(/ /g, ' ')).join('|') + ')(?= |$)', 'g');
+    function nameCore(name) {
+      let n = normalizeVN(name).replace(/[^a-z0-9]+/g, ' ').trim();
+      let prev;
+      do { prev = n; n = n.replace(LEGAL_RE, ' ').replace(/\s+/g, ' ').trim(); } while (n !== prev);
+      return n;
+    }
+    function bigrams(s) {
+      const t = s.replace(/ /g, '');
+      const m = new Map();
+      for (let i = 0; i < t.length - 1; i++) { const b = t.substr(i, 2); m.set(b, (m.get(b) || 0) + 1); }
+      return { m, n: Math.max(0, t.length - 1) };
+    }
+    function similarity(a, b) {
+      if (!a || !b) return 0;
+      if (a === b) return 1;
+      const A = bigrams(a), B = bigrams(b);
+      if (!A.n || !B.n) return 0;
+      let inter = 0;
+      A.m.forEach((c, k) => { if (B.m.has(k)) inter += Math.min(c, B.m.get(k)); });
+      return (2 * inter) / (A.n + B.n);
+    }
+
+    // ------------------------------------------------ Lược đồ trường dữ liệu
+    const F = (key, label, pats, extra) => Object.assign({ key, label, pats }, extra || {});
+    const SCHEMAS = {
+      BHXH_UNITS: {
+        label: 'CSDL Đơn vị BHXH (EXPORTDMDONVI)',
+        fields: [
+          F('maDonVi', 'Mã đơn vị BHXH', ['ma don vi', 'ma dv', 'madv', 'madonvi', 'ma dvi', 'madvi', 'ma don vi bhxh'], { excl: ['thue', 'cap tren', 'ten'] }),
+          F('mst', 'Mã số thuế', ['ma so thue', 'mst', 'masothue', 'ma thue', 'ma so thue don vi'], { excl: ['ngay', 'ca nhan'] }),
+          F('tenDonVi', 'Tên đơn vị', ['ten don vi', 'ten dv', 'ten doanh nghiep', 'ten cong ty', 'ten to chuc', 'tendonvi', 'ten dvi', 'tendvi', 'ten'], { required: true, excl: ['ma', 'nguoi', 'chu ho', 'ho ten', 'ho va ten', 'giam doc'] }),
+          F('diaChi', 'Địa chỉ', ['dia chi', 'tru so', 'dia chi tru so']),
+          F('dienThoai', 'Điện thoại', ['dien thoai', 'sdt', 'so dien thoai', 'so dt', 'phone']),
+          F('soLaoDong', 'Số LĐ đang đóng', ['so ld dang dong', 'so lao dong', 'so ld', 'lao dong dang dong', 'so nguoi tham gia', 'tong so ld', 'tong ld', 'sld', 'so lao dong tham gia'], { excl: ['tien', 'luong'] }),
+          F('trangThai', 'Trạng thái', ['trang thai', 'tinh trang', 'trang thai don vi', 'trang thai dong'])
+        ],
+        requiredAny: [['mst', 'maDonVi']]
+      },
+      EXT_UNITS: {
+        label: 'Nguồn đối soát Đơn vị / Hộ kinh doanh',
+        fields: [
+          F('mst', 'MST / Mã HKD', ['ma so thue', 'mst', 'masothue', 'ma so hkd', 'ma hkd', 'ma nnt', 'ma so nnt', 'ma ho kinh doanh', 'ma so doanh nghiep'], { required: true, excl: ['ngay', 'ca nhan', 'chu ho'] }),
+          F('tenDonVi', 'Tên DN / Hộ KD', ['ten doanh nghiep', 'ten don vi', 'ten hkd', 'ten ho kinh doanh', 'ten ho kd', 'ten co so', 'ten cua hang', 'ten nnt', 'ten nguoi nop thue', 'ten cong ty', 'ten'], { required: true, excl: ['ma', 'nguoi', 'chu ho', 'ho ten', 'ho va ten', 'giam doc', 'dai dien'] }),
+          F('nguoiDaiDien', 'Người ĐD / Chủ hộ', ['nguoi dai dien', 'dai dien phap luat', 'nguoi dai dien phap luat', 'dai dien', 'giam doc', 'chu ho', 'ho ten chu ho', 'ho va ten chu ho', 'chu co so', 'chu doanh nghiep', 'ho va ten', 'ho ten'], { excl: ['cccd', 'cmnd', 'can cuoc', 'dinh danh', 'dien thoai', 'sdt', 'dia chi', 'ngay', 'ma so'] }),
+          F('cccd', 'CCCD chủ hộ / người ĐD', ['so cccd', 'cccd', 'cmnd', 'so cmnd', 'can cuoc', 'so dinh danh', 'dinh danh ca nhan', 'giay to tuy than'], { excl: ['ngay', 'noi cap'] }),
+          F('dienThoai', 'Điện thoại', ['dien thoai', 'sdt', 'so dien thoai', 'so dt', 'phone', 'lien he']),
+          F('diaChi', 'Địa chỉ', ['dia chi kinh doanh', 'dia chi', 'dia diem kinh doanh', 'tru so', 'noi kinh doanh', 'dia chi tru so'], { excl: ['email', 'thu dien tu'] }),
+          F('soLaoDong', 'Số lao động', ['so lao dong', 'so ld', 'so luong lao dong', 'so nguoi', 'quy mo lao dong', 'so lao dong dang lam viec'], { excl: ['tien'] }),
+          F('ngayCap', 'Ngày cấp / thành lập', ['ngay cap', 'ngay thanh lap', 'ngay dang ky', 'ngay cap phep', 'ngay dkkd', 'ngay bat dau hoat dong', 'ngay cap mst']),
+          F('trangThai', 'Tình trạng hoạt động', ['tinh trang', 'trang thai', 'tinh trang hoat dong', 'trang thai hoat dong', 'trang thai mst']),
+          F('phuongPhapThue', 'Phương pháp nộp thuế', ['phuong phap nop thue', 'phuong phap tinh thue', 'phuong phap thue', 'hinh thuc nop thue', 'phuong phap']),
+          F('loaiHinh', 'Loại hình', ['loai hinh', 'loai hinh doanh nghiep', 'loai hinh to chuc']),
+          F('nganhNghe', 'Ngành nghề', ['nganh nghe', 'nganh nghe kinh doanh', 'nganh kinh doanh', 'nganh'])
+        ]
+      },
+      BHXH_EMPS: {
+        label: 'CSDL Lao động BHXH (D02-TS / TST)',
+        fields: [
+          F('hoTen', 'Họ tên', ['ho va ten', 'ho ten', 'hoten', 'ten nguoi tham gia', 'ten nld', 'ten'], { required: true, excl: ['don vi', 'doanh nghiep', 'cong ty', 'chu ho', 'cha', 'me', 'dv', 'to chuc'] }),
+          F('maSoBhxh', 'Mã số BHXH', ['ma so bhxh', 'ma bhxh', 'so so bhxh', 'ma so bao hiem xa hoi', 'so so', 'ma so bh'], { excl: ['thue', 'don vi'] }),
+          F('cccd', 'Số CCCD / CMND', ['so cccd', 'cccd', 'cmnd', 'so cmnd', 'can cuoc', 'so dinh danh', 'dinh danh ca nhan', 'so cmnd cccd'], { excl: ['ngay', 'noi cap'] }),
+          F('ngaySinh', 'Ngày / Năm sinh', ['ngay sinh', 'nam sinh', 'ngay thang nam sinh', 'sinh ngay']),
+          F('maDonVi', 'Mã đơn vị', ['ma don vi', 'ma dv', 'madv', 'madvi', 'ma dvi'], { excl: ['thue'] }),
+          F('tenDonVi', 'Tên đơn vị', ['ten don vi', 'don vi', 'noi lam viec', 'ten dv', 'co quan', 'ten dvi'], { excl: ['ma'] }),
+          F('mstDonVi', 'MST đơn vị', ['ma so thue', 'mst', 'mst don vi', 'ma so thue don vi'], { excl: ['ca nhan'] }),
+          F('trangThai', 'Trạng thái', ['trang thai', 'tinh trang', 'trang thai tham gia']),
+          F('mucLuong', 'Mức lương đóng', ['muc luong dong', 'tien luong dong', 'muc luong', 'luong dong bhxh', 'muc dong', 'tien luong', 'luong'], { excl: ['ngay', 'phu cap'] })
+        ],
+        requiredAny: [['maSoBhxh', 'cccd', 'ngaySinh']]
+      },
+      EXT_EMPS: {
+        label: 'Nguồn lao động ngoài (QTT Thuế / Hộ KD)',
+        fields: [
+          F('hoTen', 'Họ tên', ['ho va ten', 'ho ten', 'hoten', 'ten nguoi lao dong', 'ten ca nhan', 'ho ten ca nhan', 'ten nnt', 'ten'], { required: true, excl: ['don vi', 'doanh nghiep', 'cong ty', 'to chuc', 'tra thu nhap', 'dv', 'hkd'] }),
+          F('cccd', 'Số CCCD / CMND', ['so cccd', 'cccd', 'cmnd', 'so cmnd', 'can cuoc', 'so dinh danh', 'dinh danh ca nhan', 'so cmnd cccd ho chieu', 'so cmnd cccd'], { excl: ['ngay', 'noi cap'] }),
+          F('mstCaNhan', 'MST cá nhân', ['mst ca nhan', 'ma so thue ca nhan', 'ma so thue nguoi lao dong', 'mst nguoi lao dong', 'mst nld', 'ma so thue nld', 'ma so thue cua ca nhan']),
+          F('ngaySinh', 'Ngày / Năm sinh', ['ngay sinh', 'nam sinh', 'ngay thang nam sinh']),
+          F('tenDonVi', 'Đơn vị chi trả', ['ten to chuc tra thu nhap', 'to chuc tra thu nhap', 'ten to chuc ca nhan tra thu nhap', 'don vi chi tra', 'don vi tra thu nhap', 'ten doanh nghiep', 'ten don vi', 'don vi', 'ten dv', 'ten co so', 'ten hkd'], { excl: ['ma so', 'mst'] }),
+          F('mstDonVi', 'MST đơn vị chi trả', ['mst to chuc tra thu nhap', 'ma so thue to chuc tra thu nhap', 'mst don vi', 'ma so thue don vi', 'mst to chuc', 'ma so thue to chuc', 'mst dn', 'ma so thue doanh nghiep', 'mst don vi chi tra', 'ma so thue', 'mst'], { excl: ['ca nhan', 'nld', 'nguoi lao dong'] }),
+          F('thuNhap', 'Tổng thu nhập chịu thuế', ['tong thu nhap chiu thue', 'thu nhap chiu thue', 'tong tnct', 'tnct', 'tong thu nhap', 'thu nhap'], { excl: ['mien', 'giam', 'khong chiu', 'ma so', 'mst', 'to chuc', 'don vi'] }),
+          F('soThang', 'Số tháng có thu nhập', ['so thang', 'so thang lam viec', 'so thang co thu nhap']),
+          F('maSoBhxh', 'Mã số BHXH', ['ma so bhxh', 'ma bhxh', 'so so bhxh'])
+        ],
+        requiredAny: [['cccd', 'mstCaNhan', 'ngaySinh']]
+      }
+    };
+
+    function containsWord(h, p) { return (' ' + h + ' ').indexOf(' ' + p + ' ') !== -1; }
+    function scoreHeader(h, field) {
+      if (!h) return 0;
+      if (field.excl && field.excl.some(x => containsWord(h, x))) return 0;
+      const compact = h.replace(/ /g, '');
+      let best = 0;
+      field.pats.forEach(p => {
+        let s = 0;
+        if (h === p || compact === p.replace(/ /g, '')) s = 100;
+        else if (h.startsWith(p + ' ')) s = 70 + p.length;
+        else if (containsWord(h, p)) s = 50 + p.length;
+        if (s > best) best = s;
+      });
+      return best;
+    }
+    function suggestMapping(headers, target) {
+      const schema = SCHEMAS[target];
+      const cands = [];
+      schema.fields.forEach(f => headers.forEach((h, ci) => {
+        const s = scoreHeader(normHeader(h), f);
+        if (s > 0) cands.push({ f: f.key, ci, s });
+      }));
+      cands.sort((a, b) => b.s - a.s || a.ci - b.ci);
+      const map = {}; const used = new Set();
+      cands.forEach(c => { if (map[c.f] === undefined && !used.has(c.ci)) { map[c.f] = c.ci; used.add(c.ci); } });
+      return map;
+    }
+
+    // ------------------------------------------------ Dò dòng tiêu đề
+    function cellStr(c) { return c === null || c === undefined ? '' : (isDate(c) ? toDateString(c) : String(c).trim()); }
+    function isDataLike(row) {
+      return (row || []).some(c => (typeof c === 'number' && Math.abs(c) >= 1000) || isDate(c) || /\d{9,}/.test(cellStr(c).replace(/[\s.\-]/g, '')));
+    }
+    function isNumberingRow(row) {
+      const vals = (row || []).map(cellStr).filter(Boolean);
+      if (vals.length < 3) return false;
+      return vals.every(v => /^\(?\s*\d{1,2}[a-z]?\s*\)?$/i.test(v) || /^\(?[A-Z]\)?$/.test(v)) ;
+    }
+    function applyMerges(aoa, merges, offR, offC, maxRow) {
+      const lim = maxRow === undefined ? 60 : maxRow;
+      (merges || []).forEach(m => {
+        const r0 = m.s.r - (offR || 0), c0 = m.s.c - (offC || 0), r1 = m.e.r - (offR || 0), c1 = m.e.c - (offC || 0);
+        if (r0 < 0 || r0 > lim) return;
+        const v = (aoa[r0] || [])[c0];
+        if (isEmpty(v)) return;
+        for (let r = r0; r <= r1; r++) {
+          aoa[r] = aoa[r] || [];
+          for (let c = c0; c <= c1; c++) if (isEmpty(aoa[r][c])) aoa[r][c] = v;
+        }
+      });
+      return aoa;
+    }
+    function rowScore(cells, target) { return Object.keys(suggestMapping(cells.map(cellStr), target)).length; }
+
+    // Dựng tiêu đề tại dòng i; nếu dòng trên là tiêu đề nhóm (≥2 giá trị khác nhau) thì ghép làm tiền tố.
+    function buildHeaderAt(aoa, i, target) {
+      let raw = (aoa[i] || []).map(cellStr);
+      const score = rowScore(raw, target);
+      const prev = i > 0 ? aoa[i - 1] : null;
+      if (prev && !isDataLike(prev)) {
+        const pv = prev.map(cellStr);
+        const distinct = new Set(pv.filter(Boolean));
+        if (distinct.size >= 2) {
+          const width = Math.max(raw.length, pv.length);
+          const combined = [];
+          for (let c = 0; c < width; c++) {
+            const h = raw[c] || '', p = pv[c] || '';
+            combined.push(p && p !== h ? (h ? p + ' ' + h : p) : h);
+          }
+          if (rowScore(combined, target) >= score) raw = combined;
+        }
+      }
+      let dataStart = i + 1;
+      while (dataStart < aoa.length && isNumberingRow(aoa[dataStart])) dataStart++;
+      return { headerRow: i, rawHeaders: raw, headers: raw.map(normHeader), dataStart, score: rowScore(raw, target) };
+    }
+    function detectHeader(aoa, target) {
+      const maxScan = Math.min(aoa.length, 40);
+      let best = -1, bestScore = 0;
+      for (let i = 0; i < maxScan; i++) {
+        const row = aoa[i] || [];
+        if (isDataLike(row)) continue;
+        const s = rowScore(row, target);
+        if (s > bestScore) { bestScore = s; best = i; }
+      }
+      return buildHeaderAt(aoa, best < 0 ? 0 : best, target);
+    }
+
+    // ------------------------------------------------ Trích bản ghi
+    function isTotalRow(row) {
+      const vals = (row || []).map(cellStr).filter(Boolean).slice(0, 3).map(normalizeVN);
+      return vals.some(v => /^(tong cong|tong so|cong|tong|total|cong so)\s*:?$/.test(v) || /^tong cong\b/.test(v));
+    }
+
+    function extractRecords(aoa, target, mapping, dataStart, opts) {
+      opts = opts || {};
+      const get = (row, f) => (mapping[f] === undefined || mapping[f] === null || mapping[f] < 0) ? '' : row[mapping[f]];
+      const stats = { total: 0, used: 0, skippedEmpty: 0, skippedTotal: 0, missingKey: 0, invalidId: 0 };
+      const records = [];
+      const defaultMst = normalizeMST(opts.defaultMst || '');
+      for (let r = dataStart; r < aoa.length; r++) {
+        const row = aoa[r];
+        if (!row || row.every(isEmpty)) continue;
+        stats.total++;
+        if (isTotalRow(row)) { stats.skippedTotal++; continue; }
+        let rec = null;
+        if (target === 'BHXH_UNITS') {
+          const mst = normalizeMST(get(row, 'mst'));
+          const maDonVi = normCode(get(row, 'maDonVi'));
+          const ten = cleanText(get(row, 'tenDonVi'));
+          if (!mst.key && !maDonVi) { stats.missingKey++; continue; }
+          if (!isEmpty(get(row, 'mst')) && mst.kind === 'KHAC') stats.invalidId++;
+          const trangThaiRaw = cleanText(get(row, 'trangThai'));
+          rec = { mst, maDonVi, ten, diaChi: cleanText(get(row, 'diaChi')), dienThoai: cleanText(get(row, 'dienThoai')),
+            soLaoDong: parseCount(get(row, 'soLaoDong')), trangThaiRaw, inactive: isInactiveStatus(trangThaiRaw) };
+        } else if (target === 'EXT_UNITS') {
+          const mst = normalizeMST(get(row, 'mst'));
+          const ten = cleanText(get(row, 'tenDonVi'));
+          if (!mst.key && !ten) { stats.missingKey++; continue; }
+          if (!isEmpty(get(row, 'mst')) && mst.kind === 'KHAC') stats.invalidId++;
+          let cccd = normalizePersonId(get(row, 'cccd'));
+          if (!cccd.key && mst.kind === 'CCCD') cccd = { key: mst.key, kind: 'CCCD' };
+          const loaiHinh = cleanText(get(row, 'loaiHinh'));
+          const nTen = normalizeVN(ten), nLoai = normalizeVN(loaiHinh);
+          let unitType;
+          if (opts.source === 'THUE_HKD') unitType = 'HO_KINH_DOANH';
+          else if (opts.source === 'SO_TAI_CHINH') unitType = 'DOANH_NGHIEP';
+          else unitType = (/^(ho kinh doanh|ho kd|hkd)\b/.test(nTen) || nLoai.includes('ho kinh doanh') || mst.kind === 'CCCD' || !isEmpty(get(row, 'phuongPhapThue'))) ? 'HO_KINH_DOANH' : 'DOANH_NGHIEP';
+          rec = { mst, ten: ten || ('(Chưa có tên) ' + mst.key), nguoiDaiDien: cleanText(get(row, 'nguoiDaiDien')), cccd,
+            dienThoai: cleanText(get(row, 'dienThoai')), diaChi: cleanText(get(row, 'diaChi')),
+            soLaoDong: parseCount(get(row, 'soLaoDong')), ngayCap: toDateString(get(row, 'ngayCap')),
+            trangThai: mapActiveStatus(get(row, 'trangThai')), trangThaiRaw: cleanText(get(row, 'trangThai')),
+            phuongPhapThue: mapTaxMethod(get(row, 'phuongPhapThue')), loaiHinh, nganhNghe: cleanText(get(row, 'nganhNghe')),
+            unitType, source: unitType === 'HO_KINH_DOANH' ? 'THUE_HKD' : 'SO_TAI_CHINH' };
+        } else if (target === 'BHXH_EMPS') {
+          const hoTen = cleanText(get(row, 'hoTen'));
+          if (!hoTen) { stats.missingKey++; continue; }
+          const cccd = normalizePersonId(get(row, 'cccd'));
+          if (!isEmpty(get(row, 'cccd')) && !cccd.key) stats.invalidId++;
+          const trangThaiRaw = cleanText(get(row, 'trangThai'));
+          rec = { hoTen, nameKey: nameKey(hoTen), maSoBhxh: normalizeBhxhCode(get(row, 'maSoBhxh')), cccd, namSinh: parseYear(get(row, 'ngaySinh')),
+            maDonVi: normCode(get(row, 'maDonVi')), tenDonVi: cleanText(get(row, 'tenDonVi')), mstDonVi: normalizeMST(get(row, 'mstDonVi')),
+            trangThaiRaw, inactive: isInactiveStatus(trangThaiRaw), mucLuong: parseNumber(get(row, 'mucLuong')) };
+        } else if (target === 'EXT_EMPS') {
+          const hoTen = cleanText(get(row, 'hoTen'));
+          if (!hoTen) { stats.missingKey++; continue; }
+          let cccd = normalizePersonId(get(row, 'cccd'));
+          const mstCaNhan = normalizeMST(get(row, 'mstCaNhan'));
+          if (!cccd.key && mstCaNhan.kind === 'CCCD') cccd = { key: mstCaNhan.key, kind: 'CCCD' };
+          if (!isEmpty(get(row, 'cccd')) && !cccd.key) stats.invalidId++;
+          let mstDonVi = normalizeMST(get(row, 'mstDonVi'));
+          if (!mstDonVi.key && defaultMst.key) mstDonVi = defaultMst;
+          rec = { hoTen, nameKey: nameKey(hoTen), cccd, mstCaNhan: mstCaNhan.key, namSinh: parseYear(get(row, 'ngaySinh')),
+            tenDonVi: cleanText(get(row, 'tenDonVi')) || (opts.defaultUnitName || ''), mstDonVi,
+            thuNhap: parseNumber(get(row, 'thuNhap')), soThang: parseCount(get(row, 'soThang')),
+            maSoBhxh: normalizeBhxhCode(get(row, 'maSoBhxh')), source: opts.source || 'THUE_QTT' };
+        }
+        if (rec) { records.push(rec); stats.used++; }
+      }
+      return { records, stats };
+    }
+
+    // ------------------------------------------------ Khóa & gộp dữ liệu
+    function unitKey(u) { return u.mst && u.mst.key ? 'M:' + u.mst.key : 'N:' + nameCore(u.ten); }
+    function bhxhUnitKey(u) { return u.maDonVi ? 'D:' + u.maDonVi : unitKey(u); }
+    function empKey(e) {
+      const who = e.cccd && e.cccd.key ? 'C:' + e.cccd.key : (e.maSoBhxh ? 'B:' + e.maSoBhxh : 'N:' + e.nameKey + '|' + (e.namSinh || ''));
+      const where = e.mstDonVi && e.mstDonVi.parent ? e.mstDonVi.parent : nameCore(e.tenDonVi || '');
+      return who + '@' + where;
+    }
+    function bhxhEmpKey(e) {
+      if (e.maSoBhxh) return 'B:' + e.maSoBhxh;
+      if (e.cccd && e.cccd.key) return 'C:' + e.cccd.key;
+      return 'N:' + e.nameKey + '|' + (e.namSinh || '') + '|' + (e.maDonVi || '');
+    }
+    const KEY_FN = { BHXH_UNITS: bhxhUnitKey, EXT_UNITS: unitKey, BHXH_EMPS: bhxhEmpKey, EXT_EMPS: empKey };
+
+    function hasValue(v) {
+      if (v === null || v === undefined) return false;
+      if (typeof v === 'string') return v.trim() !== '';
+      if (typeof v === 'object' && 'key' in v) return !!v.key;
+      return true;
+    }
+    function mergeObj(oldR, newR) {
+      const out = Object.assign({}, oldR);
+      Object.keys(newR).forEach(k => { if (hasValue(newR[k])) out[k] = newR[k]; });
+      return out;
+    }
+    function mergeRecords(existing, incoming, keyFn, mode) {
+      const map = new Map();
+      let added = 0, updated = 0, dupInFile = 0;
+      if (mode !== 'REPLACE') (existing || []).forEach(r => map.set(keyFn(r), r));
+      const existed = new Set(map.keys());
+      const seen = new Set();
+      incoming.forEach(r => {
+        const k = keyFn(r);
+        if (seen.has(k)) dupInFile++;
+        else if (existed.has(k)) updated++;
+        else added++;
+        seen.add(k);
+        map.set(k, map.has(k) ? mergeObj(map.get(k), r) : r);
+      });
+      return { list: [...map.values()], added, updated, dupInFile };
+    }
+
+    // ------------------------------------------------ Đối soát
+    const UNJOINED_EMP = ['CHUA_THAM_GIA', 'NGUNG_DONG', 'KHAC_DON_VI'];
+
+    function reconcile(ds, cfgIn, work) {
+      const cfg = Object.assign({ fuzzyName: true, fuzzyThreshold: 85, matchCccd: true, matchNameDob: true, incomeGapPct: 30 }, cfgIn || {});
+      work = work || {};
+      const wUnits = work.units || {}, wEmps = work.emps || {};
+      const bhxhUnits = ds.bhxhUnits || [], extUnits = ds.extUnits || [], bhxhEmps = ds.bhxhEmps || [], extEmps = ds.extEmps || [];
+
+      // --- Chỉ mục CSDL đơn vị BHXH
+      const byFull = new Map(), byParent = new Map(), byMaDv = new Map();
+      const tokenIdx = new Map(); const cores = [];
+      bhxhUnits.forEach((u, i) => {
+        if (u.mst && u.mst.key) {
+          if (!byFull.has(u.mst.key)) byFull.set(u.mst.key, u);
+          if (!byParent.has(u.mst.parent)) byParent.set(u.mst.parent, []);
+          byParent.get(u.mst.parent).push(u);
+        }
+        if (u.maDonVi) byMaDv.set(u.maDonVi, u);
+        const core = nameCore(u.ten);
+        cores[i] = core;
+        new Set(core.split(' ').filter(t => t.length >= 2)).forEach(t => {
+          if (!tokenIdx.has(t)) tokenIdx.set(t, []);
+          tokenIdx.get(t).push(i);
+        });
+      });
+      const COMMON_LIMIT = Math.max(200, Math.round(bhxhUnits.length * 0.05));
+      function fuzzyFind(name) {
+        const core = nameCore(name);
+        if (core.replace(/ /g, '').length < 4) return null;
+        const cand = new Set();
+        core.split(' ').filter(t => t.length >= 2).forEach(t => {
+          const list = tokenIdx.get(t);
+          if (list && list.length <= COMMON_LIMIT) list.forEach(i => cand.add(i));
+        });
+        let best = null, bestS = 0;
+        cand.forEach(i => { const s = similarity(core, cores[i]); if (s > bestS) { bestS = s; best = bhxhUnits[i]; } });
+        return best ? { unit: best, score: bestS } : null;
+      }
+
+      // --- Chỉ mục CSDL lao động BHXH
+      const empByCccd = new Map(), empByBhxh = new Map(), empByName = new Map();
+      bhxhEmps.map(src => {
+        const mu = src.maDonVi ? byMaDv.get(src.maDonVi) : null;
+        return Object.assign({}, src, {
+          _mstParent: (src.mstDonVi && src.mstDonVi.parent) || (mu && mu.mst ? mu.mst.parent : ''),
+          _unitName: src.tenDonVi || (mu ? mu.ten : '') || src.maDonVi || ''
+        });
+      }).forEach(e => {
+        if (e.cccd && e.cccd.key && !empByCccd.has(e.cccd.key)) empByCccd.set(e.cccd.key, e);
+        if (e.maSoBhxh && !empByBhxh.has(e.maSoBhxh)) empByBhxh.set(e.maSoBhxh, e);
+        if (e.nameKey) { if (!empByName.has(e.nameKey)) empByName.set(e.nameKey, []); empByName.get(e.nameKey).push(e); }
+      });
+
+      // --- Đối soát lao động
+      const emps = extEmps.map(x => {
+        const id = empKey(x);
+        let status = 'CHUA_THAM_GIA', m = null, note = '', method = '';
+        if (x.maSoBhxh && empByBhxh.has(x.maSoBhxh)) { m = empByBhxh.get(x.maSoBhxh); method = 'Mã số BHXH'; }
+        else if (cfg.matchCccd && x.cccd && x.cccd.key && empByCccd.has(x.cccd.key)) { m = empByCccd.get(x.cccd.key); method = x.cccd.kind === 'CMND' ? 'CMND' : 'CCCD'; }
+        else if (cfg.matchNameDob && x.nameKey && empByName.has(x.nameKey)) {
+          const cands = empByName.get(x.nameKey);
+          const sameYear = cands.filter(c => c.namSinh && x.namSinh && c.namSinh === x.namSinh);
+          if (sameYear.length) {
+            const xP = x.mstDonVi && x.mstDonVi.parent;
+            const xCore = nameCore(x.tenDonVi || '');
+            const sameUnit = sameYear.find(c => (xP && c._mstParent === xP) || (!xP && xCore && nameCore(c._unitName) === xCore));
+            const idConflict = sameUnit && x.cccd && x.cccd.key && sameUnit.cccd && sameUnit.cccd.key && sameUnit.cccd.key !== x.cccd.key;
+            if (sameUnit && !idConflict) { m = sameUnit; method = 'Họ tên + năm sinh + đơn vị'; }
+            else {
+              status = 'NGHI_VAN';
+              const c = sameUnit || sameYear[0];
+              note = idConflict
+                ? `Trùng họ tên + năm sinh + đơn vị nhưng khác số CCCD (${c.cccd.key}) — cần xác minh`
+                : `Trùng họ tên + năm sinh với ${sameYear.length} người đang tham gia (VD: ${c._unitName || 'không rõ ĐV'}) nhưng chưa xác nhận được bằng CCCD / đơn vị`;
+            }
+          } else {
+            const near = cands.find(c => c.namSinh && x.namSinh && Math.abs(c.namSinh - x.namSinh) === 1);
+            const noYear = cands.find(c => !c.namSinh || !x.namSinh);
+            if (near) { status = 'NGHI_VAN'; note = `Trùng họ tên, lệch 1 năm sinh (${near.namSinh}) — ${near._unitName}`; }
+            else if (noYear) { status = 'NGHI_VAN'; note = `Trùng họ tên nhưng thiếu năm sinh để xác nhận — ${noYear._unitName}`; }
+          }
+        }
+        let incomeFlag = null;
+        if (m) {
+          const xP = x.mstDonVi && x.mstDonVi.parent;
+          if (m.inactive) { status = 'NGUNG_DONG'; note = `Khớp ${method}: có sổ tại ${m._unitName} nhưng trạng thái "${m.trangThaiRaw}" (đã báo giảm / ngừng đóng)`; }
+          else if (xP && m._mstParent && m._mstParent !== xP) {
+            status = 'KHAC_DON_VI';
+            note = `Khớp ${method}: đang tham gia tại ${m._unitName} (MST ${m._mstParent}); tại đơn vị chi trả MST ${xP} chưa tham gia — xem xét trường hợp nhiều HĐLĐ (BHTNLĐ-BNN) hoặc đã chuyển nơi làm việc`;
+          } else {
+            status = 'DA_THAM_GIA'; note = `Khớp ${method} — ${m._unitName}${m.maSoBhxh ? ' (Mã BHXH ' + m.maSoBhxh + ')' : ''}`;
+            if (x.thuNhap && m.mucLuong) {
+              const months = x.soThang > 0 && x.soThang <= 12 ? x.soThang : 12;
+              const avg = x.thuNhap / months;
+              const gap = avg > 0 ? ((avg - m.mucLuong) / avg) * 100 : 0;
+              if (gap >= cfg.incomeGapPct) incomeFlag = { avg: Math.round(avg), mucLuong: m.mucLuong, gap: Math.round(gap) };
+            }
+          }
+        }
+        if (status === 'CHUA_THAM_GIA' && !note) note = 'Không tìm thấy trong CSDL lao động BHXH';
+        const w = wEmps[id] || {};
+        const autoStatus = status;
+        if (w.verdict === 'DA_THAM_GIA' || w.verdict === 'CHUA_THAM_GIA') { status = w.verdict; note = '(Kết luận xác minh thủ công) ' + note; }
+        return Object.assign({}, x, { id, reconcileStatus: status, autoStatus, matchedEmp: m ? { hoTen: m.hoTen, maSoBhxh: m.maSoBhxh, unit: m._unitName, mst: m._mstParent, mucLuong: m.mucLuong } : null,
+          matchNote: note, incomeFlag, verdict: w.verdict || '', actionStatus: w.actionStatus || 'CHUA_TIEP_CAN', officer: w.officer || '', notes: w.notes || '' });
+      });
+
+      // --- Tổng hợp QTT theo MST đơn vị chi trả
+      const qtt = new Map();
+      emps.forEach(e => {
+        const p = e.mstDonVi && e.mstDonVi.parent;
+        if (!p) return;
+        if (!qtt.has(p)) qtt.set(p, { mst: p, ten: e.tenDonVi, total: 0, unjoined: 0, chua: 0, other: 0, suspect: 0, lowPay: 0 });
+        const g = qtt.get(p);
+        g.total++;
+        if (e.reconcileStatus === 'CHUA_THAM_GIA') { g.chua++; g.unjoined++; }
+        else if (e.reconcileStatus === 'NGUNG_DONG' || e.reconcileStatus === 'KHAC_DON_VI') { g.other++; g.unjoined++; }
+        else if (e.reconcileStatus === 'NGHI_VAN') g.suspect++;
+        if (e.incomeFlag && e.reconcileStatus === 'DA_THAM_GIA') g.lowPay++;
+      });
+
+      // --- Đối soát đơn vị
+      const thr = (cfg.fuzzyThreshold || 85) / 100;
+      const units = extUnits.map(x => {
+        const id = unitKey(x);
+        let status = 'CHUA_THAM_GIA', matched = null, note = '', similarityPct = null;
+        const k = x.mst || EMPTY_MST;
+        if (k.key && byFull.has(k.key)) {
+          matched = byFull.get(k.key);
+          status = matched.inactive ? 'NGUNG_DONG' : 'DA_THAM_GIA';
+          note = matched.inactive ? `Có mã ĐV ${matched.maDonVi || '—'} nhưng trạng thái "${matched.trangThaiRaw}"` : `Khớp chính xác MST ${k.key} (Mã ĐV: ${matched.maDonVi || '—'})`;
+        } else if (k.kind === 'MST' && k.parent && byParent.has(k.parent)) {
+          matched = byParent.get(k.parent)[0];
+          status = 'NGHI_VAN';
+          note = k.branch
+            ? `MST chi nhánh ${k.key} chưa có mã riêng; đơn vị mẹ ${matched.mst.key} đang có mã ${matched.maDonVi || '—'} — xác minh chi nhánh hạch toán phụ thuộc hay độc lập`
+            : `Khớp đơn vị có MST ${matched.mst.key} (chi nhánh / đơn vị liên quan) — cần xác minh`;
+        } else if (cfg.fuzzyName && bhxhUnits.length) {
+          const f = fuzzyFind(x.ten);
+          if (f && f.score >= thr) {
+            matched = f.unit; status = 'NGHI_VAN'; similarityPct = Math.round(f.score * 100);
+            note = `Tên giống ${similarityPct}% với "${f.unit.ten}" (MST ${f.unit.mst.key || '—'}, mã ĐV ${f.unit.maDonVi || '—'}) — nghi sai / thiếu MST`;
+          }
+        }
+        if (status === 'CHUA_THAM_GIA') note = 'Không tìm thấy trong danh mục đơn vị BHXH';
+
+        let ownerInsured = null;
+        const ownerId = (x.cccd && x.cccd.key) || (k.kind === 'CCCD' ? k.key : '');
+        if (ownerId && empByCccd.has(ownerId)) {
+          const e = empByCccd.get(ownerId);
+          ownerInsured = { unit: e._unitName, maSoBhxh: e.maSoBhxh, inactive: !!e.inactive };
+        }
+        const g = k.parent ? qtt.get(k.parent) : null;
+        const w = wUnits[id] || {};
+        const potentialManual = w.potentialCount !== undefined && w.potentialCount !== null && w.potentialCount !== '' ? Number(w.potentialCount) : (x.soLaoDong !== null && x.soLaoDong !== undefined ? x.soLaoDong : null);
+        const u = Object.assign({}, x, {
+          id, reconcileStatus: status, matchedUnit: matched ? { maDonVi: matched.maDonVi, mst: matched.mst.key, ten: matched.ten, soLaoDong: matched.soLaoDong, trangThaiRaw: matched.trangThaiRaw } : null,
+          matchNote: note, similarityPct, ownerInsured,
+          qttTotal: g ? g.total : 0, qttChuaTg: g ? g.unjoined : 0,
+          activeStatus: w.activeStatus || x.trangThai || 'DANG_HOAT_DONG',
+          actionStatus: w.actionStatus || 'CHUA_TIEP_CAN',
+          explanationType: w.explanationType || 'KHONG_CO',
+          officer: w.officer || '', notes: w.notes || '',
+          potentialCount: potentialManual
+        });
+        u.potential = Math.max(u.potentialCount || 0, u.qttChuaTg || 0);
+        u.hints = legalHints(u, bhxhEmps.length > 0);
+        return u;
+      });
+
+      // --- Đơn vị đang có mã nhưng đóng thiếu
+      const underReport = [];
+      qtt.forEach(g => {
+        const list = byParent.get(g.mst);
+        if (!list || !list.length) return;
+        const mu = list[0];
+        const counts = list.map(u => u.soLaoDong).filter(n => n !== null && n !== undefined);
+        const dangDong = counts.length ? counts.reduce((a, b) => a + b, 0) : null;
+        const chenhLech = dangDong === null ? null : g.total - dangDong;
+        if (g.unjoined > 0 || g.suspect > 0 || g.lowPay > 0 || (chenhLech !== null && chenhLech > 0)) {
+          underReport.push({ mst: g.mst, ten: mu.ten || g.ten, maDonVi: list.map(u => u.maDonVi).filter(Boolean).join(', '), unitInactive: list.every(u => u.inactive),
+            soLdDangDong: dangDong, soLdQtt: g.total, chenhLech, soChuaTg: g.chua, soKhacDv: g.other, soNghiVan: g.suspect, soDongThap: g.lowPay });
+        }
+      });
+      underReport.sort((a, b) => (b.soChuaTg + b.soKhacDv) - (a.soChuaTg + a.soKhacDv) || (b.chenhLech || 0) - (a.chenhLech || 0));
+
+      return { units, emps, underReport };
+    }
+
+    // Cảnh báo pháp lý / mâu thuẫn dữ liệu đối với giải trình
+    function legalHints(u, haveEmpMaster) {
+      const hints = [];
+      const W = t => ({ level: 'warn', text: t });
+      const I = t => ({ level: 'info', text: t });
+      const isHkd = u.unitType === 'HO_KINH_DOANH';
+      if (u.reconcileStatus === 'DA_THAM_GIA') return hints;
+      if (u.explanationType === 'HKD_KHONG_THUE_LAO_DONG' || (isHkd && u.explanationType === 'KHONG_CO' && u.phuongPhapThue === 'KE_KHAI')) {
+        hints.push(W('Luật BHXH 2024 (hiệu lực 01/7/2025) quy định chủ hộ kinh doanh có đăng ký kinh doanh thuộc đối tượng tham gia BHXH bắt buộc theo lộ trình Chính phủ quy định (NĐ 158/2025/NĐ-CP). Việc hộ không thuê lao động không đương nhiên loại trừ nghĩa vụ của chủ hộ — cần đối chiếu phương pháp nộp thuế và lộ trình áp dụng.' + (u.phuongPhapThue === 'KE_KHAI' ? ' Hộ này nộp thuế theo phương pháp KÊ KHAI — ưu tiên xem xét.' : '')));
+      }
+      if (u.explanationType === 'CHUA_CO_LAO_DONG') {
+        hints.push(W('Theo khoản 1 Điều 2 Luật BHXH 2024, người quản lý doanh nghiệp (giám đốc, thành viên HĐTV, kiểm soát viên...) không hưởng tiền lương cũng thuộc đối tượng BHXH bắt buộc — giải trình "chủ DN tự làm, chưa có lao động" cần xem xét thêm.'));
+      }
+      if (u.explanationType === 'CHU_HO_DONG_NOI_KHAC') {
+        if (u.ownerInsured && !u.ownerInsured.inactive) hints.push(I('Đã xác nhận: CCCD chủ hộ đang tham gia BHXH tại ' + u.ownerInsured.unit + '. Lưu ý giải trình chỉ áp dụng cho bản thân chủ hộ, không áp dụng cho lao động hộ thuê mướn.'));
+        else if (u.ownerInsured && u.ownerInsured.inactive) hints.push(W('CCCD chủ hộ có trong CSDL nhưng đã báo giảm / ngừng đóng tại ' + u.ownerInsured.unit + ' — giải trình chưa phù hợp.'));
+        else if (haveEmpMaster) hints.push(W('Chưa tìm thấy CCCD chủ hộ trong CSDL lao động BHXH đã nạp — cần kiểm tra lại giải trình.'));
+      } else if (u.ownerInsured && u.explanationType === 'KHONG_CO') {
+        hints.push(I('Gợi ý: CCCD chủ hộ / người đại diện đang tham gia BHXH tại ' + u.ownerInsured.unit + (u.ownerInsured.inactive ? ' (đã báo giảm)' : '') + '.'));
+      }
+      if (u.qttChuaTg > 0 && ['CHUA_CO_LAO_DONG', 'HKD_KHONG_THUE_LAO_DONG', 'LAO_DONG_THOI_VU'].includes(u.explanationType)) {
+        hints.push(W('Mâu thuẫn dữ liệu: QTT Thuế có ' + u.qttChuaTg + ' lao động nhận thu nhập từ đơn vị này nhưng chưa tham gia BHXH.'));
+      }
+      return hints;
+    }
+
+    function summarize(res) {
+      const units = res.units, emps = res.emps;
+      const u = { total: units.length, joined: 0, stopped: 0, suspect: 0, unjoined: 0, inactive: 0, explained: 0, explainedWarn: 0, potential: 0, success: 0, rate: 0 };
+      units.forEach(x => {
+        if (x.reconcileStatus === 'DA_THAM_GIA') { u.joined++; return; }
+        if (x.actionStatus === 'DA_DANG_KY_THANH_CONG') u.success++;
+        if (x.reconcileStatus === 'NGUNG_DONG') u.stopped++;
+        else if (x.reconcileStatus === 'NGHI_VAN') u.suspect++;
+        else {
+          u.unjoined++;
+          if (x.activeStatus !== 'DANG_HOAT_DONG') u.inactive++;
+          else if (x.explanationType !== 'KHONG_CO') { u.explained++; if (x.hints.some(h => h.level === 'warn')) u.explainedWarn++; }
+          else u.potential++;
+        }
+      });
+      const needWork = u.total - u.joined;
+      u.rate = needWork > 0 ? Math.round((u.success / needWork) * 100) : 0;
+      const e = { total: emps.length, joined: 0, unjoined: 0, suspect: 0, other: 0, lowPay: 0, mobilized: 0, rate: 0 };
+      emps.forEach(x => {
+        if (x.reconcileStatus === 'DA_THAM_GIA') { e.joined++; if (x.incomeFlag) e.lowPay++; }
+        else if (x.reconcileStatus === 'CHUA_THAM_GIA') e.unjoined++;
+        else if (x.reconcileStatus === 'NGHI_VAN') e.suspect++;
+        else e.other++;
+        if (UNJOINED_EMP.includes(x.reconcileStatus) && x.actionStatus !== 'CHUA_TIEP_CAN') e.mobilized++;
+      });
+      const base = e.unjoined + e.other;
+      e.rate = base > 0 ? Math.round((e.mobilized / base) * 100) : 0;
+      return { u, e };
+    }
+
+    const LABELS = {
+      unitStatus: { DA_THAM_GIA: 'Đã tham gia BHXH', CHUA_THAM_GIA: 'Chưa tham gia BHXH', NGHI_VAN: 'Nghi vấn — cần xác minh', NGUNG_DONG: 'Có mã ĐV nhưng ngừng / tạm dừng đóng' },
+      empStatus: { DA_THAM_GIA: 'Đã tham gia', CHUA_THAM_GIA: 'Chưa tham gia', NGHI_VAN: 'Nghi vấn', KHAC_DON_VI: 'Tham gia ở đơn vị khác', NGUNG_DONG: 'Đã báo giảm / ngừng đóng' },
+      active: { DANG_HOAT_DONG: 'Đang hoạt động', TAM_NGUNG_KD: 'Tạm ngừng kinh doanh', GIAI_THE_PHA_SAN: 'Giải thể / Phá sản / Thu hồi GPKD', KHONG_CON_TAI_DIA_CHI: 'Không còn hoạt động tại địa chỉ' },
+      action: { CHUA_TIEP_CAN: 'Chưa tiếp cận', DA_GUI_THONG_BAO: 'Đã gửi thông báo', DA_LAP_BIEN_BAN: 'Đã lập biên bản', CO_GIAI_TRINH: 'Có văn bản giải trình', DA_DANG_KY_THANH_CONG: 'Đã đăng ký tham gia', CHUYEN_THANH_TRA: 'Chuyển Thanh tra', DA_DANG_KY: 'Đã đăng ký tham gia' },
+      explanation: { KHONG_CO: 'Chưa giải trình', CHU_HO_DONG_NOI_KHAC: 'Chủ hộ đã đóng nơi khác', HKD_KHONG_THUE_LAO_DONG: 'Hộ tự làm, không thuê LĐ', CHUA_CO_LAO_DONG: 'Chưa có NLĐ (chủ DN tự làm)', LAO_DONG_THOI_VU: 'Chỉ có HĐLĐ dưới 1 tháng', DONG_NOI_KHAC: 'NLĐ đã đóng nơi khác', CAM_KET_THANG_SAU: 'Cam kết tháng sau đóng', LY_DO_KHAC: 'Lý do khác' },
+      source: { THUE_QTT: 'Thuế QTT', SO_KH_DT: 'Sở KH-ĐT / TC', HO_KINH_DOANH: 'UBND / Hộ KD', THUE_HKD: 'Chi cục Thuế (HKD)', SO_TAI_CHINH: 'Sở TC / KH-ĐT' },
+      taxMethod: { KE_KHAI: 'Kê khai', KHOAN: 'Khoán', TUNG_LAN: 'Từng lần phát sinh' },
+      unitType: { DOANH_NGHIEP: 'Doanh nghiệp', HO_KINH_DOANH: 'Hộ kinh doanh' }
+    };
+
+    root.RaSoatCore = {
+      normalizeVN, normHeader, nameKey, cleanText, toDateString, parseYear, parseNumber,
+      looksLikeTCVN3, tcvn3ToUnicode, normalizeMST, normalizePersonId, normalizeBhxhCode,
+      isInactiveStatus, mapActiveStatus, mapTaxMethod, nameCore, similarity,
+      SCHEMAS, scoreHeader, suggestMapping, applyMerges, isNumberingRow, buildHeaderAt, detectHeader,
+      extractRecords, KEY_FN, mergeRecords, reconcile, legalHints, summarize, LABELS
+    };
+  })(typeof window !== 'undefined' ? window : globalThis);
+  </script>
+
+  <!-- =====================================================================
+       GIAO DIỆN & ĐIỀU KHIỂN
+       ===================================================================== -->
+  <script>
+  (function () {
+    'use strict';
+    const C = window.RaSoatCore;
+    const L = C.LABELS;
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmt = n => (n === null || n === undefined || n === '') ? '—' : Number(n).toLocaleString('vi-VN');
+
+    const DS_KEY = { BHXH_UNITS: 'bhxhUnits', EXT_UNITS: 'extUnits', BHXH_EMPS: 'bhxhEmps', EXT_EMPS: 'extEmps' };
+    const DEFAULT_MODE = { BHXH_UNITS: 'REPLACE', EXT_UNITS: 'MERGE', BHXH_EMPS: 'REPLACE', EXT_EMPS: 'MERGE' };
+
+    const State = {
+      ds: { bhxhUnits: [], extUnits: [], bhxhEmps: [], extEmps: [] },
+      work: { units: {}, emps: {} },
+      cfg: { fuzzyName: true, fuzzyThreshold: 85, matchCccd: true, matchNameDob: true, incomeGapPct: 30 },
+      isDemo: false,
+      result: { units: [], emps: [], underReport: [] },
+      summary: null,
+      unitPage: 1, empPage: 1, perPage: 12,
+      selectedUnitId: null,
+      charts: { unitStatus: null, top: null }
+    };
+
+    // ------------------------------------------------------------ Lưu trữ (IndexedDB)
+    const Store = {
+      db: null,
+      open() {
+        return new Promise(res => {
+          try {
+            const rq = indexedDB.open('ra-soat-bhxh', 1);
+            rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+            rq.onsuccess = () => { this.db = rq.result; res(true); };
+            rq.onerror = () => res(false);
+          } catch (e) { res(false); }
+        });
+      },
+      _tx(mode, fn) {
+        return new Promise(res => {
+          if (!this.db) return res(null);
+          try {
+            const tx = this.db.transaction('kv', mode);
+            const rq = fn(tx.objectStore('kv'));
+            rq.onsuccess = () => res(true);
+            rq.onerror = () => res(null);
+          } catch (e) { res(null); }
+        });
+      },
+      get(k) {
+        return new Promise(res => {
+          if (!this.db) return res(null);
+          try {
+            const rq = this.db.transaction('kv', 'readonly').objectStore('kv').get(k);
+            rq.onsuccess = () => res(rq.result === undefined ? null : rq.result);
+            rq.onerror = () => res(null);
+          } catch (e) { res(null); }
+        });
+      },
+      set(k, v) { return this._tx('readwrite', s => s.put(v, k)); },
+      del(k) { return this._tx('readwrite', s => s.delete(k)); }
+    };
+    let saveTimer = null;
+    function scheduleSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        const ok = await Store.set('session', { version: 2, ds: State.ds, work: State.work, cfg: State.cfg, isDemo: State.isDemo, savedAt: Date.now() });
+        const t = new Date();
+        $('save-indicator').innerHTML = ok
+          ? `<i class="fa-solid fa-lock mr-1"></i>Đã lưu cục bộ ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`
+          : '<i class="fa-solid fa-triangle-exclamation mr-1"></i>Không lưu được (trình duyệt chặn lưu trữ)';
+      }, 500);
+    }
+
+    const Profiles = {
+      KEY: 'rasoat-column-profiles',
+      all() { try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (e) { return {}; } },
+      save(all) { try { localStorage.setItem(this.KEY, JSON.stringify(all)); } catch (e) { /* bỏ qua */ } },
+      signature(target, headers) { return target + '|' + headers.filter(Boolean).join('|'); }
+    };
+
+    // ------------------------------------------------------------ Đối soát & hiển thị
+    function recompute() {
+      State.result = C.reconcile(State.ds, State.cfg, State.work);
+      State.summary = C.summarize(State.result);
+      renderAll();
+      scheduleSave();
+    }
+    function renderAll() {
+      updateCounters();
+      renderUnitsTable();
+      renderEmployeesTable();
+      renderUnderTable();
+      renderDashboardCharts();
+      $('demo-banner').classList.toggle('hidden', !State.isDemo);
+      const hasData = Object.values(State.ds).some(a => a.length);
+      $('dashboard-empty').classList.toggle('hidden', hasData);
+      $('label-profile-count').innerText = Object.keys(Profiles.all()).length;
+    }
+
+    function updateCounters() {
+      const { u, e } = State.summary;
+      const set = (id, v) => { $(id).innerText = typeof v === 'number' ? v.toLocaleString('vi-VN') : v; };
+      set('kpi-u-total', u.total); set('kpi-u-joined', u.joined); set('kpi-u-unjoined', u.unjoined);
+      set('kpi-u-suspect', u.suspect + u.stopped); set('kpi-u-inactive', u.inactive); set('kpi-u-explained', u.explained);
+      set('kpi-u-explained-warn', `${u.explainedWarn} cần xem xét lại`); set('kpi-u-success', u.success); set('kpi-u-rate', `Tỷ lệ thành công: ${u.rate}%`);
+      set('badge-unjoined-units', u.unjoined + u.suspect + u.stopped);
+      set('kpi-e-total', e.total); set('kpi-e-joined', e.joined); set('kpi-e-unjoined', e.unjoined); set('kpi-e-suspect', e.suspect);
+      set('kpi-e-other', e.other); set('kpi-e-lowpay', e.lowPay); set('kpi-e-rate', `${e.rate}%`);
+      set('badge-unjoined-employees', e.unjoined + e.suspect + e.other);
+      set('badge-under', State.result.underReport.length);
+      set('badge-file-bhxh-units', `${State.ds.bhxhUnits.length.toLocaleString('vi-VN')} đơn vị`);
+      set('badge-file-ext-units', `${State.ds.extUnits.length.toLocaleString('vi-VN')} đơn vị`);
+      set('badge-file-bhxh-emps', `${State.ds.bhxhEmps.length.toLocaleString('vi-VN')} lao động`);
+      set('badge-file-ext-emps', `${State.ds.extEmps.length.toLocaleString('vi-VN')} lao động`);
+    }
+
+    function renderDashboardCharts() {
+      if (typeof Chart === 'undefined') return;
+      const { u } = State.summary;
+      const cats = [
+        ['Đã tham gia', u.joined, '#10b981', 'bg-emerald-50 text-emerald-700'],
+        ['Chưa TG – cần khai thác', u.potential, '#f43f5e', 'bg-rose-50 text-rose-700'],
+        ['Chưa TG – có giải trình', u.explained, '#f59e0b', 'bg-amber-50 text-amber-700'],
+        ['Nghi vấn', u.suspect, '#f97316', 'bg-orange-50 text-orange-700'],
+        ['Có mã, ngừng đóng', u.stopped, '#6366f1', 'bg-indigo-50 text-indigo-700'],
+        ['Giải thể / Tạm ngừng', u.inactive, '#a855f7', 'bg-purple-50 text-purple-700']
+      ];
+      const ctx = $('chart-units-status');
+      if (State.charts.unitStatus) State.charts.unitStatus.destroy();
+      State.charts.unitStatus = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: cats.map(c => c[0]), datasets: [{ data: cats.map(c => c[1]), backgroundColor: cats.map(c => c[2]), borderWidth: 2, borderColor: '#ffffff' }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '68%' }
+      });
+      $('legend-units-status').innerHTML = cats.map(c => `<div class="p-1.5 rounded-lg ${c[3]}"><span class="font-bold block">${c[1].toLocaleString('vi-VN')}</span>${esc(c[0])}</div>`).join('');
+
+      const top = State.result.units
+        .filter(x => x.reconcileStatus !== 'DA_THAM_GIA' && x.activeStatus === 'DANG_HOAT_DONG' && x.potential > 0)
+        .sort((a, b) => b.potential - a.potential).slice(0, 5);
+      if (State.charts.top) State.charts.top.destroy();
+      State.charts.top = new Chart($('chart-top-unjoined'), {
+        type: 'bar',
+        data: {
+          labels: top.length ? top.map(x => x.ten.length > 24 ? x.ten.substring(0, 22) + '…' : x.ten) : ['Chưa có số liệu'],
+          datasets: [{ label: 'Số LĐ tiềm năng', data: top.length ? top.map(x => x.potential) : [0], backgroundColor: '#6366f1', borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { size: 10 } } } }, plugins: { legend: { display: false } } }
+      });
+    }
+
+    // ------------------------------------------------------------ Bảng đơn vị
+    function getFilteredUnits() {
+      const search = C.normalizeVN($('unit-search').value);
+      const digits = search.replace(/\D/g, '');
+      const type = $('unit-filter-type').value, st = $('unit-filter-bhxh-status').value;
+      const act = $('unit-filter-active-status').value, prog = $('unit-filter-action-status').value;
+      return State.result.units.filter(u => {
+        if (type !== 'ALL' && u.unitType !== type) return false;
+        if (st === 'CAN_XU_LY') { if (u.reconcileStatus === 'DA_THAM_GIA') return false; }
+        else if (st !== 'ALL' && u.reconcileStatus !== st) return false;
+        if (act !== 'ALL' && u.activeStatus !== act) return false;
+        if (prog === 'CO_GIAI_TRINH') { if (u.explanationType === 'KHONG_CO') return false; }
+        else if (prog === 'CAN_XEM_XET') { if (!u.hints.some(h => h.level === 'warn') || u.explanationType === 'KHONG_CO') return false; }
+        else if (prog !== 'ALL' && u.actionStatus !== prog) return false;
+        if (search) {
+          return (digits.length >= 3 && ((u.mst.key || '').replace(/\D/g, '').includes(digits) || (u.cccd && u.cccd.key || '').includes(digits)))
+            || C.normalizeVN(u.ten).includes(search) || C.normalizeVN(u.nguoiDaiDien).includes(search) || C.normalizeVN(u.diaChi).includes(search);
+        }
+        return true;
+      });
+    }
+    function paginate(list, pageKey, infoId, prevId, nextId) {
+      const totalPages = Math.max(1, Math.ceil(list.length / State.perPage));
+      State[pageKey] = Math.min(Math.max(1, State[pageKey]), totalPages);
+      $(infoId).innerText = list.length ? `Trang ${State[pageKey]} / ${totalPages}` : '0 / 0';
+      $(prevId).disabled = State[pageKey] <= 1;
+      $(nextId).disabled = State[pageKey] >= totalPages;
+      const start = (State[pageKey] - 1) * State.perPage;
+      return list.slice(start, start + State.perPage);
+    }
+    const UNIT_BADGE = {
+      DA_THAM_GIA: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      CHUA_THAM_GIA: 'bg-rose-50 text-rose-700 border-rose-200',
+      NGHI_VAN: 'bg-orange-50 text-orange-700 border-orange-200',
+      NGUNG_DONG: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+    };
+    const ACTIVE_BADGE = {
+      DANG_HOAT_DONG: 'text-emerald-700 bg-emerald-50 border-emerald-100',
+      TAM_NGUNG_KD: 'text-amber-700 bg-amber-50 border-amber-200',
+      GIAI_THE_PHA_SAN: 'text-purple-700 bg-purple-50 border-purple-200',
+      KHONG_CON_TAI_DIA_CHI: 'text-slate-500 bg-slate-100 border-slate-200'
+    };
+    const ACTION_STYLE = {
+      DA_DANG_KY_THANH_CONG: 'text-emerald-600 font-bold', DA_LAP_BIEN_BAN: 'text-indigo-600 font-medium', DA_GUI_THONG_BAO: 'text-amber-600 font-medium',
+      CO_GIAI_TRINH: 'text-sky-600 font-medium', CHUYEN_THANH_TRA: 'text-rose-600 font-bold', CHUA_TIEP_CAN: 'text-slate-400'
+    };
+
+    function renderUnitsTable() {
+      const list = getFilteredUnits();
+      $('label-unit-count').innerText = list.length.toLocaleString('vi-VN');
+      $('unit-empty-state').classList.toggle('hidden', list.length > 0);
+      $('check-all-units').checked = false;
+      const paged = paginate(list, 'unitPage', 'unit-pagination-info', 'btn-unit-prev', 'btn-unit-next');
+      $('table-units-body').innerHTML = paged.map(u => {
+        const isHkd = u.unitType === 'HO_KINH_DOANH';
+        const typeBadge = isHkd
+          ? '<span class="inline-block text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">Hộ KD</span>'
+          : '<span class="inline-block text-[9px] font-bold uppercase tracking-wider text-sky-700 bg-sky-100 px-1.5 py-0.5 rounded border border-sky-300">DN</span>';
+        const idKind = u.mst.kind === 'CCCD' ? '<span class="text-[9px] text-slate-400 ml-1">(số định danh)</span>' : (u.mst.branch ? '<span class="text-[9px] text-slate-400 ml-1">(chi nhánh)</span>' : '');
+        const qtt = u.qttTotal ? `<span class="block text-[10px] text-indigo-600 mt-0.5">QTT: ${u.qttTotal} LĐ, ${u.qttChuaTg} chưa TG</span>` : '';
+        const owner = u.ownerInsured ? `<span class="block text-[10px] text-purple-600 mt-0.5"><i class="fa-solid fa-id-card mr-0.5"></i>Chủ hộ/ĐD đang có sổ BHXH</span>` : '';
+        const warns = u.hints.filter(h => h.level === 'warn');
+        const warn = warns.length ? ` <i class="fa-solid fa-triangle-exclamation text-amber-500" title="${esc(warns.map(h => h.text).join('\n'))}"></i>` : '';
+        const explCls = u.explanationType === 'KHONG_CO' ? 'text-slate-400 italic' : 'text-amber-700 font-medium bg-amber-50 px-1.5 py-0.5 rounded';
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-3 text-center"><input type="checkbox" class="unit-row-cb rounded text-sky-600" data-id="${esc(u.id)}"></td>
+            <td class="py-3 px-3"><div class="font-mono font-bold text-sky-800 whitespace-nowrap">${esc(u.mst.key || '--')}</div><div class="mt-0.5">${typeBadge}${idKind}</div></td>
+            <td class="py-3 px-3"><span class="font-bold text-slate-800 block">${esc(u.ten)}</span><span class="text-[10px] text-slate-400">${esc(L.source[u.source] || '')}${u.ngayCap ? ' - Ngày: ' + esc(u.ngayCap) : ''}${u.phuongPhapThue ? ' - PP thuế: ' + esc(L.taxMethod[u.phuongPhapThue]) : ''}</span></td>
+            <td class="py-3 px-3"><span class="font-semibold text-slate-700 block">${esc(u.nguoiDaiDien || '--')}</span>${u.cccd && u.cccd.key ? `<span class="text-[10px] text-slate-500 font-mono block">CCCD: ${esc(u.cccd.key)}</span>` : ''}<span class="text-[10px] text-slate-400">${esc(u.dienThoai || 'Chưa có SĐT')}</span></td>
+            <td class="py-3 px-3 max-w-[180px] truncate" title="${esc(u.diaChi)}">${esc(u.diaChi || '--')}</td>
+            <td class="py-3 px-3 max-w-[220px]"><span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold border ${UNIT_BADGE[u.reconcileStatus]}">${esc(L.unitStatus[u.reconcileStatus])}</span>
+              <span class="block text-[10px] text-slate-500 mt-0.5 leading-snug">${esc(u.matchNote)}</span>${qtt}${owner}</td>
+            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium border ${ACTIVE_BADGE[u.activeStatus] || ''}">${esc(L.active[u.activeStatus])}</span></td>
+            <td class="py-3 px-3"><span class="${explCls}">${esc(L.explanation[u.explanationType] || 'Có giải trình')}</span>${warn}</td>
+            <td class="py-3 px-3 text-[11px]"><span class="${ACTION_STYLE[u.actionStatus] || ''}">${esc(L.action[u.actionStatus])}</span>${u.officer ? `<span class="block text-[10px] text-slate-400">${esc(u.officer)}</span>` : ''}</td>
+            <td class="py-3 px-3 text-center"><button class="btn-edit-unit p-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded-lg" data-id="${esc(u.id)}" title="Xác minh, cập nhật giải trình & in biên bản"><i class="fa-solid fa-pen-to-square"></i></button></td>
+          </tr>`;
+      }).join('');
+    }
+
+    // ------------------------------------------------------------ Bảng lao động
+    function getFilteredEmployees() {
+      const search = C.normalizeVN($('emp-search').value);
+      const digits = search.replace(/\D/g, '');
+      const st = $('emp-filter-status').value, src = $('emp-filter-source').value, act = $('emp-filter-action').value;
+      return State.result.emps.filter(e => {
+        if (st === 'CAN_XU_LY') { if (e.reconcileStatus === 'DA_THAM_GIA') return false; }
+        else if (st === 'DONG_THAP') { if (!e.incomeFlag || e.reconcileStatus !== 'DA_THAM_GIA') return false; }
+        else if (st !== 'ALL' && e.reconcileStatus !== st) return false;
+        if (src !== 'ALL' && e.source !== src) return false;
+        if (act !== 'ALL' && e.actionStatus !== act) return false;
+        if (search) {
+          return (digits.length >= 3 && ((e.cccd.key || '').includes(digits) || (e.mstDonVi.key || '').replace(/\D/g, '').includes(digits)))
+            || e.nameKey.includes(search) || C.normalizeVN(e.tenDonVi).includes(search);
+        }
+        return true;
+      });
+    }
+    const EMP_BADGE = {
+      DA_THAM_GIA: 'bg-emerald-50 text-emerald-700 border-emerald-200', CHUA_THAM_GIA: 'bg-rose-50 text-rose-700 border-rose-200',
+      NGHI_VAN: 'bg-orange-50 text-orange-700 border-orange-200', KHAC_DON_VI: 'bg-purple-50 text-purple-700 border-purple-200', NGUNG_DONG: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+    };
+    function renderEmployeesTable() {
+      const list = getFilteredEmployees();
+      $('label-emp-count').innerText = list.length.toLocaleString('vi-VN');
+      $('emp-empty-state').classList.toggle('hidden', list.length > 0);
+      const paged = paginate(list, 'empPage', 'emp-pagination-info', 'btn-emp-prev', 'btn-emp-next');
+      const opt = (val, cur, label) => `<option value="${val}"${val === cur ? ' selected' : ''}>${label}</option>`;
+      $('table-employees-body').innerHTML = paged.map(e => {
+        const low = e.incomeFlag ? `<span class="block text-[10px] text-amber-700 mt-0.5"><i class="fa-solid fa-arrow-trend-down mr-0.5"></i>Đóng ${fmt(e.incomeFlag.mucLuong)} / TN bình quân ${fmt(e.incomeFlag.avg)} (thấp hơn ${e.incomeFlag.gap}%)</span>` : '';
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-3 font-bold text-slate-800">${esc(e.hoTen)}</td>
+            <td class="py-3 px-3 font-mono text-[11px] text-slate-700">${esc(e.cccd.key || 'Chưa có')}${e.cccd.kind === 'CMND' ? ' <span class="text-[9px] text-slate-400">(CMND)</span>' : ''}</td>
+            <td class="py-3 px-3 font-medium">${esc(e.namSinh || '--')}</td>
+            <td class="py-3 px-3 max-w-[200px] truncate" title="${esc(e.tenDonVi)}">${esc(e.tenDonVi || '--')}</td>
+            <td class="py-3 px-3 font-mono text-slate-600 whitespace-nowrap">${esc(e.mstDonVi.key || '--')}</td>
+            <td class="py-3 px-3 text-[10px] font-medium text-slate-500">${esc(L.source[e.source] || e.source)}</td>
+            <td class="py-3 px-3 max-w-[260px]"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${EMP_BADGE[e.reconcileStatus]}">${esc(L.empStatus[e.reconcileStatus])}</span>
+              <span class="block text-[10px] text-slate-500 mt-0.5 leading-snug">${esc(e.matchNote)}</span>${low}</td>
+            <td class="py-3 px-3"><select class="emp-verdict text-[11px] px-1.5 py-1 rounded-lg border border-slate-200 bg-white" data-id="${esc(e.id)}">
+              ${opt('', e.verdict, 'Theo tự động')}${opt('DA_THAM_GIA', e.verdict, 'Xác nhận đã TG')}${opt('CHUA_THAM_GIA', e.verdict, 'Xác nhận chưa TG')}</select></td>
+            <td class="py-3 px-3"><select class="emp-action text-[11px] px-1.5 py-1 rounded-lg border border-slate-200 bg-white" data-id="${esc(e.id)}">
+              ${opt('CHUA_TIEP_CAN', e.actionStatus, 'Chưa tiếp cận')}${opt('DA_GUI_THONG_BAO', e.actionStatus, 'Đã gửi thông báo')}${opt('DA_LAP_BIEN_BAN', e.actionStatus, 'Đã lập biên bản')}${opt('DA_DANG_KY', e.actionStatus, 'Đã đăng ký')}</select></td>
+          </tr>`;
+      }).join('');
+    }
+
+    function renderUnderTable() {
+      const list = State.result.underReport;
+      $('under-empty-state').classList.toggle('hidden', list.length > 0);
+      $('table-under-body').innerHTML = list.map(r => `
+        <tr class="hover:bg-purple-50/50 cursor-pointer under-row" data-mst="${esc(r.mst)}">
+          <td class="py-2.5 px-3 font-mono font-bold text-sky-800">${esc(r.mst)}</td>
+          <td class="py-2.5 px-3 font-semibold text-slate-800">${esc(r.ten)}${r.unitInactive ? ' <span class="text-[10px] text-indigo-600">(đang ngừng đóng)</span>' : ''}</td>
+          <td class="py-2.5 px-3">${esc(r.maDonVi)}</td>
+          <td class="py-2.5 px-3 text-right">${fmt(r.soLdDangDong)}</td>
+          <td class="py-2.5 px-3 text-right">${fmt(r.soLdQtt)}</td>
+          <td class="py-2.5 px-3 text-right font-bold ${r.chenhLech > 0 ? 'text-rose-600' : 'text-slate-500'}">${r.chenhLech === null ? '—' : (r.chenhLech > 0 ? '+' : '') + fmt(r.chenhLech)}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-rose-600">${fmt(r.soChuaTg)}</td>
+          <td class="py-2.5 px-3 text-right text-purple-700">${fmt(r.soKhacDv)}</td>
+          <td class="py-2.5 px-3 text-right text-orange-600">${fmt(r.soNghiVan)}</td>
+          <td class="py-2.5 px-3 text-right text-amber-600">${fmt(r.soDongThap)}</td>
+        </tr>`).join('');
+    }
+
+    function showEmployeesOf(mst) {
+      $('emp-search').value = mst;
+      $('emp-filter-status').value = 'ALL';
+      $('emp-filter-source').value = 'ALL';
+      $('emp-filter-action').value = 'ALL';
+      State.empPage = 1;
+      switchTab('tab-employees');
+    }
+
+    // ------------------------------------------------------------ Modal đơn vị
+    function openUnitModal(id) {
+      const u = State.result.units.find(x => x.id === id);
+      if (!u) return;
+      State.selectedUnitId = id;
+      $('m-unit-name').innerText = u.ten;
+      $('m-unit-mst').innerText = u.mst.key || '--';
+      $('m-unit-rep').innerText = (u.nguoiDaiDien || 'Chưa rõ') + (u.cccd && u.cccd.key ? ' — CCCD ' + u.cccd.key : '');
+      $('m-unit-phone').innerText = u.dienThoai || 'Chưa có SĐT';
+      $('m-unit-date').innerText = [u.ngayCap, u.phuongPhapThue ? 'PP thuế: ' + L.taxMethod[u.phuongPhapThue] : ''].filter(Boolean).join(' · ') || '--';
+      $('m-unit-address').innerText = u.diaChi || 'Chưa cập nhật địa chỉ';
+      const b = $('m-unit-bhxh-match-badge');
+      b.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold border ' + UNIT_BADGE[u.reconcileStatus];
+      b.innerText = L.unitStatus[u.reconcileStatus];
+      $('m-unit-match-note').innerText = u.matchNote + (u.matchedUnit && u.matchedUnit.soLaoDong !== null && u.matchedUnit.soLaoDong !== undefined ? ` · Số LĐ đang đóng: ${u.matchedUnit.soLaoDong}` : '');
+      $('m-unit-qtt').innerText = u.qttTotal ? `Dữ liệu QTT Thuế: ${u.qttTotal} lao động nhận thu nhập, trong đó ${u.qttChuaTg} chưa tham gia / tham gia nơi khác.` : 'Không có dữ liệu QTT theo MST này.';
+      $('btn-unit-view-qtt').classList.toggle('hidden', !u.qttTotal);
+      $('m-unit-active-select').value = u.activeStatus;
+      $('m-unit-action-select').value = u.actionStatus;
+      $('m-unit-explanation-type').value = u.explanationType;
+      $('m-unit-officer').value = u.officer;
+      $('m-unit-potential-count').value = u.potentialCount === null || u.potentialCount === undefined ? '' : u.potentialCount;
+      $('m-unit-notes').value = u.notes;
+      renderUnitHints(u);
+      $('modal-unit-detail').classList.remove('hidden');
+    }
+    function renderUnitHints(u) {
+      const box = $('m-unit-hints');
+      box.classList.toggle('hidden', !u.hints.length);
+      box.innerHTML = u.hints.map(h => `<p><i class="fa-solid ${h.level === 'warn' ? 'fa-triangle-exclamation text-amber-600' : 'fa-circle-info text-sky-600'} mr-1"></i>${esc(h.text)}</p>`).join('');
+    }
+    function previewHintsInModal() {
+      const u = State.result.units.find(x => x.id === State.selectedUnitId);
+      if (!u) return;
+      const draft = Object.assign({}, u, { explanationType: $('m-unit-explanation-type').value });
+      renderUnitHints(Object.assign(draft, { hints: C.legalHints(draft, State.ds.bhxhEmps.length > 0) }));
+    }
+    function closeUnitModal() { $('modal-unit-detail').classList.add('hidden'); State.selectedUnitId = null; }
+    function saveUnitModal() {
+      const id = State.selectedUnitId;
+      if (!id) return;
+      const pc = $('m-unit-potential-count').value;
+      State.work.units[id] = {
+        activeStatus: $('m-unit-active-select').value,
+        actionStatus: $('m-unit-action-select').value,
+        explanationType: $('m-unit-explanation-type').value,
+        officer: $('m-unit-officer').value.trim(),
+        potentialCount: pc === '' ? null : Math.max(0, parseInt(pc, 10) || 0),
+        notes: $('m-unit-notes').value.trim(),
+        updatedAt: Date.now()
+      };
+      closeUnitModal();
+      recompute();
+      showToast('Đã lưu kết quả xác minh đơn vị!', 'success');
+    }
+
+    function printUnitMinutes(u) {
+      if (!u) { showToast('Chưa chọn đơn vị để in biên bản!', 'error'); return; }
+      const now = new Date();
+      $('print-date').innerText = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
+      $('print-unit-name').innerText = u.ten;
+      $('print-unit-mst').innerText = u.mst.key || '..........................';
+      $('print-unit-phone').innerText = u.dienThoai || '..........................';
+      $('print-unit-rep').innerText = u.nguoiDaiDien || '..........................';
+      $('print-unit-address').innerText = u.diaChi || '..........................................................';
+      $('print-officer-name').innerText = u.officer || '..........................';
+      $('print-active-status').innerText = L.active[u.activeStatus];
+      $('print-bhxh-status').innerText = u.reconcileStatus === 'DA_THAM_GIA'
+        ? `Đã đăng ký tham gia (Mã ĐV: ${u.matchedUnit ? u.matchedUnit.maDonVi : ''})`
+        : (u.reconcileStatus === 'NGUNG_DONG' ? 'Đã có mã đơn vị nhưng đang ngừng / tạm dừng đóng' : 'Chưa đăng ký tham gia đóng BHXH, BHYT, BHTN bắt buộc');
+      const map = {
+        CHUA_CO_LAO_DONG: 'Đơn vị mới thành lập, hiện chỉ có người quản lý / thành viên sáng lập tự điều hành, chưa tuyển dụng người lao động.',
+        LAO_DONG_THOI_VU: 'Đơn vị chỉ sử dụng người lao động có hợp đồng lao động dưới 1 tháng.',
+        CAM_KET_THANG_SAU: 'Đơn vị đang hoàn tất hồ sơ nhân sự, cam kết đăng ký tham gia BHXH trước thời hạn quy định.',
+        CHU_HO_DONG_NOI_KHAC: 'Chủ hộ kinh doanh đã tham gia BHXH bắt buộc tại đơn vị khác.',
+        HKD_KHONG_THUE_LAO_DONG: 'Hộ kinh doanh do các thành viên gia đình tự làm, không thuê mướn lao động.',
+        DONG_NOI_KHAC: 'Người lao động của đơn vị đã tham gia BHXH tại nơi làm việc khác.'
+      };
+      $('print-unit-explanation').innerText = [map[u.explanationType], u.notes].filter(Boolean).join(' ') || '...................................................................................................';
+      window.print();
+    }
+
+    // ------------------------------------------------------------ Đọc file & ghép cột
+    const Import = { ctx: null };
+
+    function readWorkbook(buf, fileName) {
+      const ext = (fileName.split('.').pop() || '').toLowerCase();
+      if (ext === 'csv' || ext === 'txt') {
+        let text;
+        try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+        catch (e) { text = new TextDecoder('windows-1258').decode(buf); }
+        text = text.replace(/^﻿/, '');
+        return XLSX.read(text, { type: 'string', raw: true, cellDates: true });
+      }
+      try {
+        const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true });
+        if (wb && wb.SheetNames && wb.SheetNames.length) return wb;
+      } catch (e) { console.warn('Đọc dạng nhị phân thất bại, thử dạng văn bản/HTML', e); }
+      let text;
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+      catch (e) { text = new TextDecoder('windows-1258').decode(buf); }
+      return XLSX.read(text, { type: 'string', cellDates: true });
+    }
+
+    function sheetToAoa(ws) {
+      if (!ws || !ws['!ref']) return { aoa: [], tcvn3: false };
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', blankrows: true });
+      C.applyMerges(aoa, ws['!merges'] || [], range.s.r, range.s.c);
+      const texts = [];
+      for (let r = 0; r < Math.min(aoa.length, 300); r++) (aoa[r] || []).forEach(c => { if (typeof c === 'string' && c) texts.push(c); });
+      const tcvn3 = C.looksLikeTCVN3(texts);
+      if (tcvn3) aoa.forEach(row => { if (row) for (let i = 0; i < row.length; i++) if (typeof row[i] === 'string') row[i] = C.tcvn3ToUnicode(row[i]); });
+      return { aoa, tcvn3 };
+    }
+
+    function startImport(file, target) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = readWorkbook(e.target.result, file.name);
+          if (!wb || !wb.SheetNames || !wb.SheetNames.length) { showToast('Không đọc được trang tính nào từ file này!', 'error'); return; }
+          // Chọn trang tính có tiêu đề phù hợp nhất
+          let bestSheet = wb.SheetNames[0], bestScore = -1;
+          wb.SheetNames.forEach(n => {
+            const ws = wb.Sheets[n];
+            if (!ws || !ws['!ref']) return;
+            const rg = XLSX.utils.decode_range(ws['!ref']);
+            const head = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', range: { s: rg.s, e: { r: Math.min(rg.e.r, rg.s.r + 40), c: rg.e.c } } });
+            const s = C.detectHeader(head, target).score;
+            if (s > bestScore) { bestScore = s; bestSheet = n; }
+          });
+          Import.ctx = { target, fileName: file.name, wb };
+          openMappingModal(bestSheet);
+        } catch (err) {
+          console.error(err);
+          showToast('Định dạng tệp chưa tương thích. Vui lòng kiểm tra file hoặc tải Mẫu Excel chuẩn!', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function loadSheet(sheetName, headerRowIdx) {
+      const ctx = Import.ctx;
+      if (ctx.sheetName !== sheetName) {
+        const { aoa, tcvn3 } = sheetToAoa(ctx.wb.Sheets[sheetName]);
+        ctx.sheetName = sheetName; ctx.aoa = aoa; ctx.tcvn3 = tcvn3;
+      }
+      ctx.header = headerRowIdx === undefined ? C.detectHeader(ctx.aoa, ctx.target) : C.buildHeaderAt(ctx.aoa, headerRowIdx, ctx.target);
+      const sig = Profiles.signature(ctx.target, ctx.header.headers);
+      const prof = Profiles.all()[sig];
+      ctx.fromProfile = false;
+      if (prof) {
+        ctx.mapping = {};
+        Object.keys(prof).forEach(f => { const i = ctx.header.headers.indexOf(prof[f]); if (i >= 0) ctx.mapping[f] = i; });
+        ctx.fromProfile = true;
+      } else {
+        ctx.mapping = C.suggestMapping(ctx.header.rawHeaders, ctx.target);
+      }
+    }
+
+    function colLetter(i) { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+
+    function openMappingModal(sheetName) {
+      const ctx = Import.ctx;
+      ctx.sheetName = null;
+      loadSheet(sheetName);
+      const schema = C.SCHEMAS[ctx.target];
+      $('map-title').innerText = schema.label;
+      $('map-file').innerText = ctx.fileName;
+      $('map-sheet').innerHTML = ctx.wb.SheetNames.map(n => `<option value="${esc(n)}"${n === sheetName ? ' selected' : ''}>${esc(n)}</option>`).join('');
+      $('map-mode').value = DEFAULT_MODE[ctx.target];
+      const srcOpts = {
+        EXT_UNITS: [['AUTO', 'Tự nhận diện DN / Hộ KD'], ['SO_TAI_CHINH', 'Sở TC / KH-ĐT (Doanh nghiệp)'], ['THUE_HKD', 'Chi cục Thuế (Hộ kinh doanh)']],
+        EXT_EMPS: [['THUE_QTT', 'Thuế (Quyết toán TNCN)'], ['SO_KH_DT', 'Sở KH-ĐT / Tài chính'], ['HO_KINH_DOANH', 'UBND phường xã (Hộ KD)']]
+      }[ctx.target];
+      $('map-source-wrap').classList.toggle('hidden', !srcOpts);
+      $('map-source').innerHTML = (srcOpts || []).map(o => `<option value="${o[0]}">${o[1]}</option>`).join('');
+      $('map-default-mst-wrap').classList.toggle('hidden', ctx.target !== 'EXT_EMPS');
+      $('map-default-mst').value = '';
+      renderMappingBody();
+      $('modal-mapping').classList.remove('hidden');
+    }
+
+    function renderMappingBody() {
+      const ctx = Import.ctx;
+      const schema = C.SCHEMAS[ctx.target];
+      $('map-header-row').value = ctx.header.headerRow + 1;
+      $('map-tcvn3').classList.toggle('hidden', !ctx.tcvn3);
+      $('map-profile').classList.toggle('hidden', !ctx.fromProfile);
+      const colOpts = ctx.header.rawHeaders.map((h, i) => ({ i, label: `Cột ${colLetter(i)}: ${h || '(trống)'}` }));
+      $('map-fields').innerHTML = schema.fields.map(f => `
+        <label class="flex items-center gap-2 p-2 rounded-lg border ${ctx.mapping[f.key] !== undefined ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'}">
+          <span class="w-36 shrink-0 font-semibold text-slate-700">${esc(f.label)}${f.required ? ' <span class="text-rose-500">*</span>' : ''}</span>
+          <select class="map-field flex-1 min-w-0 px-2 py-1 rounded border border-slate-200 bg-white" data-field="${f.key}">
+            <option value="">-- Không có --</option>
+            ${colOpts.map(o => `<option value="${o.i}"${ctx.mapping[f.key] === o.i ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}
+          </select>
+        </label>`).join('');
+      renderMappingPreview();
+    }
+
+    const PREVIEW_COLS = {
+      BHXH_UNITS: [['Mã ĐV', r => r.maDonVi], ['MST', r => r.mst.key], ['Tên đơn vị', r => r.ten], ['Số LĐ', r => r.soLaoDong], ['Trạng thái', r => r.trangThaiRaw + (r.inactive ? ' (ngừng)' : '')]],
+      EXT_UNITS: [['MST', r => r.mst.key + (r.mst.kind === 'CCCD' ? ' (định danh)' : '')], ['Tên', r => r.ten], ['Loại', r => L.unitType[r.unitType]], ['Chủ hộ / ĐD', r => r.nguoiDaiDien], ['CCCD', r => r.cccd.key], ['Địa chỉ', r => r.diaChi], ['Số LĐ', r => r.soLaoDong], ['Tình trạng', r => r.trangThai ? L.active[r.trangThai] : r.trangThaiRaw], ['PP thuế', r => L.taxMethod[r.phuongPhapThue] || '']],
+      BHXH_EMPS: [['Họ tên', r => r.hoTen], ['Mã BHXH', r => r.maSoBhxh], ['CCCD', r => r.cccd.key], ['Năm sinh', r => r.namSinh], ['Mã ĐV', r => r.maDonVi], ['MST ĐV', r => r.mstDonVi.key], ['Tên ĐV', r => r.tenDonVi], ['Trạng thái', r => r.trangThaiRaw + (r.inactive ? ' (ngừng)' : '')], ['Mức lương', r => r.mucLuong]],
+      EXT_EMPS: [['Họ tên', r => r.hoTen], ['CCCD', r => r.cccd.key], ['Năm sinh', r => r.namSinh], ['Đơn vị chi trả', r => r.tenDonVi], ['MST ĐV', r => r.mstDonVi.key], ['Thu nhập CT', r => r.thuNhap], ['Số tháng', r => r.soThang]]
+    };
+    function currentOpts() {
+      return { source: $('map-source').value || undefined, defaultMst: $('map-default-mst').value.trim() };
+    }
+    function missingRequired() {
+      const ctx = Import.ctx, schema = C.SCHEMAS[ctx.target];
+      const miss = schema.fields.filter(f => f.required && ctx.mapping[f.key] === undefined).map(f => f.label);
+      (schema.requiredAny || []).forEach(group => {
+        if (!group.some(k => ctx.mapping[k] !== undefined)) {
+          miss.push('ít nhất một trong: ' + group.map(k => schema.fields.find(f => f.key === k).label).join(' / '));
+        }
+      });
+      if (ctx.target === 'EXT_EMPS' && ctx.mapping.mstDonVi === undefined && !$('map-default-mst').value.trim()) {
+        miss.push('MST đơn vị chi trả (chọn cột hoặc nhập MST mặc định) — cần để phát hiện đơn vị đóng thiếu');
+      }
+      return miss;
+    }
+    function renderMappingPreview() {
+      const ctx = Import.ctx;
+      const res = C.extractRecords(ctx.aoa, ctx.target, ctx.mapping, ctx.header.dataStart, currentOpts());
+      ctx.preview = res;
+      const cols = PREVIEW_COLS[ctx.target];
+      const rows = res.records.slice(0, 8);
+      $('map-preview').innerHTML = `<thead class="bg-slate-50 text-slate-500"><tr>${cols.map(c => `<th class="py-1.5 px-2 font-semibold whitespace-nowrap">${esc(c[0])}</th>`).join('')}</tr></thead>
+        <tbody class="divide-y divide-slate-100">${rows.map(r => `<tr>${cols.map(c => { const v = c[1](r); return `<td class="py-1 px-2 whitespace-nowrap">${esc(v === null || v === undefined || v === '' ? '—' : v)}</td>`; }).join('')}</tr>`).join('') || `<tr><td class="p-3 text-slate-400" colspan="${cols.length}">Không có dòng dữ liệu hợp lệ — kiểm tra lại dòng tiêu đề và cột.</td></tr>`}</tbody>`;
+      const s = res.stats;
+      const miss = missingRequired();
+      $('map-stats').innerHTML = `Dòng dữ liệu bắt đầu từ dòng <strong>${ctx.header.dataStart + 1}</strong>. Tổng <strong>${s.total.toLocaleString('vi-VN')}</strong> dòng → hợp lệ <strong class="text-emerald-700">${s.used.toLocaleString('vi-VN')}</strong>` +
+        (s.missingKey ? `, bỏ qua <strong class="text-rose-600">${s.missingKey}</strong> dòng thiếu khóa` : '') +
+        (s.skippedTotal ? `, bỏ ${s.skippedTotal} dòng tổng cộng` : '') +
+        (s.invalidId ? `, <strong class="text-amber-600">${s.invalidId}</strong> dòng có MST/CCCD sai độ dài (vẫn nạp, cần kiểm tra)` : '') + '.' +
+        (miss.length ? `<div class="mt-1 text-rose-600 font-semibold"><i class="fa-solid fa-circle-exclamation mr-1"></i>Còn thiếu: ${esc(miss.join('; '))}</div>` : '');
+    }
+
+    function confirmImport() {
+      const ctx = Import.ctx;
+      const miss = missingRequired();
+      const hardMiss = C.SCHEMAS[ctx.target].fields.filter(f => f.required && ctx.mapping[f.key] === undefined);
+      if (hardMiss.length) { showToast('Chưa chọn cột bắt buộc: ' + hardMiss.map(f => f.label).join(', '), 'error'); return; }
+      if (miss.length && !confirm('Còn thiếu: ' + miss.join('; ') + '\n\nVẫn tiếp tục nạp? (kết quả đối soát có thể kém chính xác)')) return;
+      const res = ctx.preview || C.extractRecords(ctx.aoa, ctx.target, ctx.mapping, ctx.header.dataStart, currentOpts());
+      if (!res.records.length) { showToast('Không có dòng dữ liệu hợp lệ để nạp!', 'error'); return; }
+      if (State.isDemo) {
+        if (!confirm('Đang hiển thị SỐ LIỆU MẪU. Hệ thống sẽ xóa toàn bộ số liệu mẫu trước khi nạp dữ liệu thật. Tiếp tục?')) return;
+        resetAll(false);
+      }
+      if ($('map-remember').checked) {
+        const all = Profiles.all();
+        const prof = {};
+        Object.keys(ctx.mapping).forEach(f => { prof[f] = ctx.header.headers[ctx.mapping[f]]; });
+        all[Profiles.signature(ctx.target, ctx.header.headers)] = prof;
+        Profiles.save(all);
+      }
+      const key = DS_KEY[ctx.target];
+      const merged = C.mergeRecords(State.ds[key], res.records, C.KEY_FN[ctx.target], $('map-mode').value);
+      State.ds[key] = merged.list;
+      closeMapping();
+      recompute();
+      showToast(`Đã nạp ${res.records.length.toLocaleString('vi-VN')} dòng: thêm mới ${merged.added.toLocaleString('vi-VN')}, cập nhật ${merged.updated.toLocaleString('vi-VN')}` + (merged.dupInFile ? `, ${merged.dupInFile} dòng trùng trong file đã gộp` : '') + '.', 'success');
+    }
+    function closeMapping() { $('modal-mapping').classList.add('hidden'); Import.ctx = null; }
+
+    // ------------------------------------------------------------ Số liệu mẫu (hư cấu)
+    function buildDemo() {
+      const T = {
+        BHXH_UNITS: {
+          aoa: [
+            ['DANH MỤC ĐƠN VỊ THAM GIA BHXH (EXPORTDMDONVI)'], [],
+            ['STT', 'Mã đơn vị', 'Tên đơn vị', 'Mã số thuế', 'Địa chỉ', 'Số LĐ đang đóng', 'Trạng thái'],
+            [1, 'TZ0123A', 'Công ty Cổ Phần Cơ Khí Vạn Phát', '1801234567', '123 Đường 3/2, Ninh Kiều, Cần Thơ', 42, 'Đang hoạt động'],
+            [2, 'BW0456B', 'Công ty TNHH May Mặc Thịnh Vượng', '1802345678', 'KCN Trà Nóc, Bình Thủy, Cần Thơ', 115, 'Đang hoạt động'],
+            [3, 'TO0789C', 'Công ty TNHH Thực Phẩm Sông Hậu', '1803456789', '45 Võ Văn Kiệt, Bình Thủy, Cần Thơ', 28, 'Đang hoạt động'],
+            [4, 'YN1011D', 'Công ty Cổ Phần Logistics Tây Nam', '1804567890', 'Cảng Cái Răng, Cần Thơ', 65, 'Đang hoạt động'],
+            [5, 'TZ1213E', 'Công ty TNHH TM Dịch Vụ Hoàng Kim', '1805678901', '78 Nguyễn Trãi, Ninh Kiều, Cần Thơ', 0, 'Tạm dừng đóng'],
+            [6, 'BW1415F', 'Công ty TNHH Dược Phẩm Cần Thơ Xanh', '1806789012', '90 CMT8, Ninh Kiều, Cần Thơ', 33, 'Đang hoạt động'],
+            [7, 'HK0012G', 'Hộ KD Cà Phê Mộc', '8491029312', '12 Đại lộ Hòa Bình, Ninh Kiều', 3, 'Đang hoạt động'],
+            [8, 'DL0001H', 'Công ty Điện Lực TP Cần Thơ', '1800112233', 'Ninh Kiều, Cần Thơ', 850, 'Đang hoạt động']
+          ]
+        },
+        EXT_UNITS: {
+          aoa: [
+            ['Mã số thuế', 'Tên doanh nghiệp / Hộ kinh doanh', 'Người đại diện / Chủ hộ', 'Số CCCD chủ hộ', 'Điện thoại', 'Địa chỉ', 'Ngày cấp', 'Phương pháp nộp thuế', 'Tình trạng'],
+            ['1801234567', 'Công ty Cổ Phần Cơ Khí Vạn Phát', 'Nguyễn Văn Minh', '', '0903123456', '123 Đường 3/2, Ninh Kiều, Cần Thơ', '15/01/2026', '', 'Đang hoạt động'],
+            ['1802345678', 'Công ty TNHH May Mặc Thịnh Vượng', 'Trần Thị Thu Mai', '', '0918234567', 'KCN Trà Nóc, Bình Thủy, Cần Thơ', '20/01/2026', '', 'Đang hoạt động'],
+            ['1803456789-001', 'Chi nhánh Công ty TNHH Thực Phẩm Sông Hậu tại Ô Môn', 'Lê Hoàng Nam', '', '0939345679', 'Quận Ô Môn, Cần Thơ', '03/02/2026', '', 'Đang hoạt động'],
+            ['1804567899', 'CÔNG TY CP LOGISTICS TÂY NAM', 'Phạm Hồng Thái', '', '0907456789', 'Cái Răng, Cần Thơ', '08/02/2026', '', 'Đang hoạt động'],
+            ['1805678901', 'Công ty TNHH TM Dịch Vụ Hoàng Kim', 'Võ Quốc Bảo', '', '0913567890', '78 Nguyễn Trãi, Ninh Kiều', '11/01/2026', '', 'Đang hoạt động'],
+            ['8491029312', 'Hộ KD Cà Phê Mộc', 'Nguyễn Thanh Tùng', '079089006543', '0907888999', '12 Đại lộ Hòa Bình, Ninh Kiều', '02/01/2026', 'Kê khai', 'Đang hoạt động'],
+            [84091005566, 'Hộ Kinh Doanh Tiệm Vàng Kim Phúc', 'Lý Kim Cương', '', '0909123888', '34 Nam Kỳ Khởi Nghĩa, Tân An, Ninh Kiều', '10/01/2026', 'Kê khai', 'Đang hoạt động'],
+            ['8392100413', 'Hộ KD Garage Sửa Chữa Ô Tô Hưng Thịnh', 'Phan Văn Hưng', 89087002345, '0939112233', '88 Võ Nguyên Giáp, Cái Răng', '12/01/2026', 'Khoán', 'Đang hoạt động'],
+            ['8392100414', 'Hộ KD Tạp Hóa Cô Sáu', 'Nguyễn Thị Sáu', '092178003412', '0918776655', 'Chợ Phong Điền, Cần Thơ', '15/01/2026', 'Khoán', 'Đang hoạt động'],
+            ['8392100415', 'Hộ KD Quán Ăn Gia Đình Bến Ninh Kiều', 'Trần Văn Sang', '090085001928', '0903445566', '22 Hai Bà Trưng, Tân An, Ninh Kiều', '18/01/2026', 'Khoán', 'Đang hoạt động'],
+            ['1809988771', 'Công ty TNHH Công Nghệ Số Tây Đô', 'Lâm Hoài An', '', '0909988771', '254 Nguyễn Văn Cừ, Ninh Kiều', '05/02/2026', '', 'Đang hoạt động'],
+            ['1809988772', 'Công ty Cổ Phần Xây Dựng & Địa Ốc Nam Mekong', 'Trần Đại Nghĩa', '', '0919988772', 'KDC Hưng Phú 1, Cái Răng', '10/02/2026', '', 'Đang hoạt động'],
+            ['1809988775', 'Công ty TNHH Tư Vấn Thiết Kế An Bình', 'Vũ Đức Thịnh', '', '0912988775', '48 Mậu Thân, Ninh Kiều', '18/02/2026', '', 'Đang hoạt động'],
+            ['1809988776', 'Công ty CP XNK Thủy Sản Cửu Long', 'Dương Thành Ý', '', '0903988776', 'KCN Thốt Nốt, Cần Thơ', '02/01/2026', '', 'Đã giải thể'],
+            ['1809988778', 'Công ty TNHH May Thêu Mỹ Nghệ Đồng Bằng', 'Lê Thị Thu Thủy', '', '0938988778', 'Quận Ô Môn, Cần Thơ', '25/01/2026', '', 'Tạm ngừng kinh doanh']
+          ],
+          opts: { source: 'AUTO' }
+        },
+        BHXH_EMPS: {
+          aoa: [
+            ['DANH SÁCH LAO ĐỘNG THAM GIA BHXH, BHYT, BHTN'],
+            ['STT', 'Họ và tên', 'Mã số BHXH', 'Ngày sinh', 'Số CCCD', 'Đơn vị', '', 'Mức lương đóng', 'Trạng thái'],
+            ['', '', '', '', '', 'Mã đơn vị', 'Tên đơn vị', '', ''],
+            ['(1)', '(2)', '(3)', '(4)', '(5)', '(6)', '(7)', '(8)', '(9)'],
+            [1, 'Nguyễn Văn Hùng', '7912345678', 34405, 87094001234, 'TZ0123A', 'Công ty CP Cơ Khí Vạn Phát', 8500000, 'Đang tham gia'],
+            [2, 'Trần Thị Thu Thảo', '7923456789', '15/06/1998', '089198005678', 'BW0456B', 'Công ty TNHH May Mặc Thịnh Vượng', 6200000, 'Đang tham gia'],
+            [3, 'Lê Hoàng Nam', '7934567890', '1990', '091090003456', 'TO0789C', 'Công ty TNHH Thực Phẩm Sông Hậu', 9000000, 'Đang tham gia'],
+            [4, 'Trần Văn Sang', '7988221144', '1985', '090085001928', 'DL0001H', 'Công ty Điện Lực TP Cần Thơ', 12000000, 'Đang tham gia'],
+            [5, 'Nguyễn Thanh Tùng', '7999887766', '1989', '079089006543', 'HK0012G', 'Hộ KD Cà Phê Mộc', 5000000, 'Đang tham gia'],
+            [6, 'Võ Thị Lan', '7911223344', '1992', '083092004455', 'TZ0123A', 'Công ty CP Cơ Khí Vạn Phát', 7000000, 'Báo giảm'],
+            [7, 'Phạm Minh Khoa', '7922334455', '1993', '080093001122', 'DL0001H', 'Công ty Điện Lực TP Cần Thơ', 11000000, 'Đang tham gia'],
+            [8, 'Lê Thị Hồng', '7933445566', '1988', '', 'BW0456B', 'Công ty TNHH May Mặc Thịnh Vượng', 6000000, 'Đang tham gia'],
+            [9, 'Đặng Văn Tài', '7944556677', '1990', '', 'BW1415F', 'Công ty TNHH Dược Phẩm Cần Thơ Xanh', 7500000, 'Đang tham gia']
+          ],
+          merges: [
+            { s: { r: 1, c: 0 }, e: { r: 2, c: 0 } }, { s: { r: 1, c: 1 }, e: { r: 2, c: 1 } }, { s: { r: 1, c: 2 }, e: { r: 2, c: 2 } },
+            { s: { r: 1, c: 3 }, e: { r: 2, c: 3 } }, { s: { r: 1, c: 4 }, e: { r: 2, c: 4 } }, { s: { r: 1, c: 5 }, e: { r: 1, c: 6 } },
+            { s: { r: 1, c: 7 }, e: { r: 2, c: 7 } }, { s: { r: 1, c: 8 }, e: { r: 2, c: 8 } }
+          ]
+        },
+        EXT_EMPS: {
+          aoa: [
+            ['STT', 'Họ và tên', 'Mã số thuế cá nhân', 'Số CCCD', 'Ngày sinh', 'Tên tổ chức trả thu nhập', 'MST tổ chức trả thu nhập', 'Tổng thu nhập chịu thuế', 'Số tháng'],
+            [1, 'Nguyễn Văn Hùng', '', '087094001234', '1994', 'Công ty CP Cơ Khí Vạn Phát', '1801234567', 120000000, 12],
+            [2, 'Trần Thị Thu Thảo', '', '089198005678', '1998', 'Công ty TNHH May Mặc Thịnh Vượng', '1802345678', 180000000, 12],
+            [3, 'Võ Thị Lan', '', '083092004455', '1992', 'Công ty CP Cơ Khí Vạn Phát', '1801234567', 60000000, 8],
+            [4, 'Phạm Minh Khoa', '', '080093001122', '1993', 'Công ty CP Cơ Khí Vạn Phát', '1801234567', 36000000, 6],
+            [5, 'Huỳnh Thanh Phong', '', '086095007788', '1995', 'Công ty CP Cơ Khí Vạn Phát', '1801234567', 96000000, 12],
+            [6, 'Ngô Thị Bích', '', '087097002211', '1997', 'Công ty CP Cơ Khí Vạn Phát', '1801234567', 84000000, 12],
+            [7, 'Lê Thị Hồng', '', '', '1988', 'Công ty TNHH May Mặc Thịnh Vượng', '1802345678', 72000000, 12],
+            [8, 'Dương Quốc Thái', '092095008989', '', '1995', 'Công ty TNHH Công Nghệ Số Tây Đô', '1809988771', 90000000, 10],
+            [9, 'Đặng Văn Tài', '', '', '1990', 'Công ty TNHH Công Nghệ Số Tây Đô', '1809988771', 80000000, 10],
+            [10, 'Mai Thị Ngọc', '', '094099003344', '1999', 'Công ty TNHH Công Nghệ Số Tây Đô', '1809988771', 70000000, 10],
+            [11, 'Phan Thị Diễm My', '', '089196007788', '1996', 'Công ty CP Xây Dựng & Địa Ốc Nam Mekong', '1809988772', 60000000, 10],
+            [12, 'Trương Văn Lộc', '', '079090001357', '1990', 'Công ty TNHH Tư Vấn Thiết Kế An Bình', '1809988775', 50000000, 7],
+            [13, 'Nguyễn Thị Hạnh', '', '089300005511', '2000', 'Hộ KD Tiệm Vàng Kim Phúc', '084091005566', 48000000, 12]
+          ],
+          opts: { source: 'THUE_QTT' }
+        }
+      };
+      const ds = {};
+      Object.keys(T).forEach(target => {
+        const t = T[target];
+        const aoa = t.aoa.map(r => r.slice());
+        if (t.merges) C.applyMerges(aoa, t.merges, 0, 0);
+        const h = C.detectHeader(aoa, target);
+        const mapping = C.suggestMapping(h.rawHeaders, target);
+        const recs = C.extractRecords(aoa, target, mapping, h.dataStart, t.opts || {}).records;
+        ds[DS_KEY[target]] = C.mergeRecords([], recs, C.KEY_FN[target], 'REPLACE').list;
+      });
+      const work = {
+        units: {
+          'M:8392100413': { actionStatus: 'DA_LAP_BIEN_BAN', explanationType: 'CAM_KET_THANG_SAU', officer: 'Nguyễn Văn Nam', potentialCount: 5, notes: 'Chủ cơ sở cam kết đăng ký BHXH cho 5 thợ máy trước ngày 15/03/2026' },
+          'M:8392100414': { actionStatus: 'CO_GIAI_TRINH', explanationType: 'HKD_KHONG_THUE_LAO_DONG', officer: 'Phạm Minh Trí', potentialCount: 0, notes: 'Hai vợ chồng lớn tuổi tự trông quán' },
+          'M:8392100415': { actionStatus: 'CO_GIAI_TRINH', explanationType: 'CHU_HO_DONG_NOI_KHAC', officer: 'Lê Văn Tám', potentialCount: 3, notes: 'Quán có 3 nhân viên phụ bếp cần đôn đốc' },
+          'M:1809988772': { actionStatus: 'DA_GUI_THONG_BAO', officer: 'Lê Văn Tám - Tổ Thu 2', potentialCount: 15, notes: 'Đã gửi thông báo đôn đốc số 124/TB-BHXH ngày 18/02' },
+          'M:1809988775': { actionStatus: 'CO_GIAI_TRINH', explanationType: 'CHUA_CO_LAO_DONG', officer: 'Nguyễn Văn Nam', potentialCount: 0, notes: 'Văn phòng chỉ có 1 giám đốc góp vốn tự điều hành' },
+          'M:084091005566': { actionStatus: 'DA_GUI_THONG_BAO', officer: 'Lê Văn Tám', potentialCount: 4 }
+        },
+        emps: {}
+      };
+      return { ds, work };
+    }
+
+    function resetAll(render) {
+      State.ds = { bhxhUnits: [], extUnits: [], bhxhEmps: [], extEmps: [] };
+      State.work = { units: {}, emps: {} };
+      State.isDemo = false;
+      if (render !== false) recompute();
+    }
+
+    // ------------------------------------------------------------ Xuất Excel
+    function exportExcel() {
+      const wb = XLSX.utils.book_new();
+      const addSheet = (rows, name, widths) => {
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = widths.map(w => ({ wch: w }));
+        XLSX.utils.book_append_sheet(wb, ws, name);
+      };
+      addSheet([['STT', 'MÃ SỐ THUẾ', 'LOẠI HÌNH', 'TÊN ĐƠN VỊ / HỘ KD', 'NGƯỜI ĐDPL / CHỦ HỘ', 'CCCD', 'ĐIỆN THOẠI', 'ĐỊA CHỈ', 'PP NỘP THUẾ', 'KẾT QUẢ ĐỐI SOÁT', 'DIỄN GIẢI', 'MÃ ĐV BHXH', 'SỐ LĐ ĐANG ĐÓNG', 'LĐ TRÊN QTT', 'LĐ QTT CHƯA TG', 'SỐ LĐ TIỀM NĂNG (XÁC MINH)', 'TÌNH TRẠNG THỰC TẾ', 'GIẢI TRÌNH', 'CẢNH BÁO', 'TIẾN ĐỘ VẬN ĐỘNG', 'CÁN BỘ PHỤ TRÁCH', 'GHI CHÚ']]
+        .concat(State.result.units.map((u, i) => [i + 1, u.mst.key, L.unitType[u.unitType], u.ten, u.nguoiDaiDien, u.cccd.key, u.dienThoai, u.diaChi, L.taxMethod[u.phuongPhapThue] || '',
+          L.unitStatus[u.reconcileStatus], u.matchNote, u.matchedUnit ? u.matchedUnit.maDonVi : '', u.matchedUnit && u.matchedUnit.soLaoDong !== null ? u.matchedUnit.soLaoDong : '',
+          u.qttTotal, u.qttChuaTg, u.potentialCount === null ? '' : u.potentialCount, L.active[u.activeStatus], L.explanation[u.explanationType], u.hints.map(h => h.text).join(' | '),
+          L.action[u.actionStatus], u.officer, u.notes])), 'RaSoat_DonVi', [5, 16, 13, 40, 22, 14, 12, 40, 10, 22, 60, 11, 10, 9, 9, 10, 20, 24, 60, 18, 20, 40]);
+      addSheet([['STT', 'HỌ VÀ TÊN', 'SỐ CCCD/CMND', 'NĂM SINH', 'ĐƠN VỊ CHI TRẢ', 'MST ĐƠN VỊ', 'NGUỒN', 'TỔNG TN CHỊU THUẾ', 'SỐ THÁNG', 'KẾT QUẢ ĐỐI SOÁT', 'DIỄN GIẢI', 'MÃ SỐ BHXH (NẾU KHỚP)', 'ĐƠN VỊ ĐANG ĐÓNG', 'MỨC LƯƠNG ĐÓNG', 'TN BÌNH QUÂN THÁNG', 'ĐÓNG THẤP HƠN (%)', 'KẾT LUẬN XÁC MINH', 'TIẾN ĐỘ VẬN ĐỘNG']]
+        .concat(State.result.emps.map((e, i) => [i + 1, e.hoTen, e.cccd.key, e.namSinh || '', e.tenDonVi, e.mstDonVi.key, L.source[e.source] || e.source, e.thuNhap === null ? '' : e.thuNhap, e.soThang === null ? '' : e.soThang,
+          L.empStatus[e.reconcileStatus], e.matchNote, e.matchedEmp ? e.matchedEmp.maSoBhxh : '', e.matchedEmp ? e.matchedEmp.unit : '', e.matchedEmp && e.matchedEmp.mucLuong !== null ? e.matchedEmp.mucLuong : '',
+          e.incomeFlag ? e.incomeFlag.avg : '', e.incomeFlag ? e.incomeFlag.gap : '', e.verdict ? L.empStatus[e.verdict] : 'Theo tự động', L.action[e.actionStatus]])), 'RaSoat_LaoDong', [5, 24, 14, 8, 36, 16, 14, 14, 8, 20, 70, 13, 30, 12, 12, 10, 16, 16]);
+      addSheet([['STT', 'MST ĐƠN VỊ', 'TÊN ĐƠN VỊ', 'MÃ ĐV BHXH', 'LĐ ĐANG ĐÓNG', 'LĐ TRÊN QTT', 'CHÊNH LỆCH', 'LĐ QTT CHƯA TG', 'KHÁC ĐV / BÁO GIẢM', 'NGHI VẤN', 'ĐÓNG THẤP HƠN TN']]
+        .concat(State.result.underReport.map((r, i) => [i + 1, r.mst, r.ten, r.maDonVi, r.soLdDangDong === null ? '' : r.soLdDangDong, r.soLdQtt, r.chenhLech === null ? '' : r.chenhLech, r.soChuaTg, r.soKhacDv, r.soNghiVan, r.soDongThap])),
+        'DonVi_DongThieu', [5, 16, 40, 14, 10, 10, 10, 12, 14, 10, 12]);
+      XLSX.writeFile(wb, `Bao_Cao_Ra_Soat_Tong_Hop_BHXH_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      showToast('Đã tải xuống file Excel báo cáo tổng hợp!', 'success');
+    }
+
+    function downloadTemplate(rows, sheet, file) {
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = rows[0].map(() => ({ wch: 22 }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, sheet);
+      XLSX.writeFile(wb, file);
+    }
+
+    // ------------------------------------------------------------ Tiện ích giao diện
+    let toastTimer = null;
+    function showToast(message, type) {
+      const icon = $('toast-icon');
+      $('toast-message').innerText = message;
+      const cfg = { success: ['text-emerald-400 text-lg', 'fa-circle-check'], error: ['text-rose-400 text-lg', 'fa-circle-xmark'] }[type] || ['text-sky-400 text-lg', 'fa-circle-info'];
+      icon.className = cfg[0];
+      icon.innerHTML = `<i class="fa-solid ${cfg[1]}"></i>`;
+      $('toast').classList.remove('translate-x-[120%]');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => $('toast').classList.add('translate-x-[120%]'), type === 'error' ? 6000 : 4000);
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        const on = b.getAttribute('data-tab') === tabId;
+        b.classList.toggle('active', on); b.classList.toggle('border-sky-400', on); b.classList.toggle('text-sky-300', on);
+        b.classList.toggle('border-transparent', !on); b.classList.toggle('text-slate-300', !on);
+      });
+      document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('hidden', s.id !== tabId));
+      if (tabId === 'tab-dashboard') renderDashboardCharts();
+      if (tabId === 'tab-units') renderUnitsTable();
+      if (tabId === 'tab-employees') renderEmployeesTable();
+    }
+
+    function readCfgFromUi() {
+      State.cfg = {
+        fuzzyName: $('cfg-unit-fuzzy-name').checked,
+        fuzzyThreshold: Math.min(100, Math.max(60, parseInt($('cfg-fuzzy-threshold').value, 10) || 85)),
+        matchCccd: $('cfg-emp-cccd').checked,
+        matchNameDob: $('cfg-emp-name-dob').checked,
+        incomeGapPct: Math.min(95, Math.max(0, parseInt($('cfg-income-gap').value, 10) || 30))
+      };
+    }
+    function writeCfgToUi() {
+      $('cfg-unit-fuzzy-name').checked = State.cfg.fuzzyName;
+      $('cfg-fuzzy-threshold').value = State.cfg.fuzzyThreshold;
+      $('cfg-emp-cccd').checked = State.cfg.matchCccd;
+      $('cfg-emp-name-dob').checked = State.cfg.matchNameDob;
+      $('cfg-income-gap').value = State.cfg.incomeGapPct;
+    }
+
+    // ------------------------------------------------------------ Khởi động
+    document.addEventListener('DOMContentLoaded', async () => {
+      $('label-review-year').innerText = 'Năm ' + new Date().getFullYear();
+      if (typeof XLSX === 'undefined') showToast('Không tải được thư viện đọc Excel (SheetJS). Kiểm tra kết nối mạng.', 'error');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab'))));
+      $('btn-go-to-units').addEventListener('click', () => switchTab('tab-units'));
+
+      $('btn-load-demo').addEventListener('click', () => {
+        const hasReal = !State.isDemo && Object.values(State.ds).some(a => a.length);
+        if (hasReal && !confirm('Nạp số liệu mẫu sẽ THAY THẾ toàn bộ dữ liệu và kết quả xác minh hiện có. Tiếp tục?')) return;
+        const demo = buildDemo();
+        State.ds = demo.ds; State.work = demo.work; State.isDemo = true;
+        recompute();
+        showToast('Đã nạp bộ số liệu mẫu (hư cấu) để thử nghiệm!', 'success');
+      });
+      $('btn-clear-demo').addEventListener('click', () => { resetAll(); showToast('Đã xóa số liệu mẫu.', 'info'); });
+
+      const clearDs = (btn, key, msg) => $(btn).addEventListener('click', () => {
+        if (!State.ds[key].length) return;
+        if (!confirm(msg + '?')) return;
+        State.ds[key] = []; recompute(); showToast('Đã ' + msg.toLowerCase(), 'info');
+      });
+      clearDs('btn-clear-bhxh-units', 'bhxhUnits', 'Xóa dữ liệu Đơn vị BHXH');
+      clearDs('btn-clear-ext-units', 'extUnits', 'Xóa dữ liệu Đơn vị đối soát');
+      clearDs('btn-clear-bhxh-emps', 'bhxhEmps', 'Xóa dữ liệu Lao động BHXH');
+      clearDs('btn-clear-ext-emps', 'extEmps', 'Xóa dữ liệu Lao động nguồn ngoài');
+
+      $('unit-search').addEventListener('input', () => { State.unitPage = 1; renderUnitsTable(); });
+      ['unit-filter-type', 'unit-filter-bhxh-status', 'unit-filter-active-status', 'unit-filter-action-status'].forEach(id => $(id).addEventListener('change', () => { State.unitPage = 1; renderUnitsTable(); }));
+      $('btn-reset-unit-filter').addEventListener('click', () => {
+        $('unit-search').value = ''; ['unit-filter-type', 'unit-filter-bhxh-status', 'unit-filter-active-status', 'unit-filter-action-status'].forEach(id => { $(id).value = 'ALL'; });
+        State.unitPage = 1; renderUnitsTable();
+      });
+      $('btn-unit-prev').addEventListener('click', () => { State.unitPage--; renderUnitsTable(); });
+      $('btn-unit-next').addEventListener('click', () => { State.unitPage++; renderUnitsTable(); });
+
+      $('emp-search').addEventListener('input', () => { State.empPage = 1; renderEmployeesTable(); });
+      ['emp-filter-status', 'emp-filter-source', 'emp-filter-action'].forEach(id => $(id).addEventListener('change', () => { State.empPage = 1; renderEmployeesTable(); }));
+      $('btn-reset-emp-filter').addEventListener('click', () => {
+        $('emp-search').value = ''; ['emp-filter-status', 'emp-filter-source', 'emp-filter-action'].forEach(id => { $(id).value = 'ALL'; });
+        State.empPage = 1; renderEmployeesTable();
+      });
+      $('btn-emp-prev').addEventListener('click', () => { State.empPage--; renderEmployeesTable(); });
+      $('btn-emp-next').addEventListener('click', () => { State.empPage++; renderEmployeesTable(); });
+
+      // Ủy quyền sự kiện cho các bảng
+      $('table-units-body').addEventListener('click', e => { const b = e.target.closest('.btn-edit-unit'); if (b) openUnitModal(b.getAttribute('data-id')); });
+      $('table-employees-body').addEventListener('change', e => {
+        const s = e.target.closest('select'); if (!s) return;
+        const id = s.getAttribute('data-id');
+        const w = State.work.emps[id] = Object.assign({}, State.work.emps[id]);
+        if (s.classList.contains('emp-verdict')) w.verdict = s.value;
+        if (s.classList.contains('emp-action')) w.actionStatus = s.value;
+        w.updatedAt = Date.now();
+        recompute();
+      });
+      $('table-under-body').addEventListener('click', e => { const r = e.target.closest('.under-row'); if (r) showEmployeesOf(r.getAttribute('data-mst')); });
+
+      $('check-all-units').addEventListener('change', e => document.querySelectorAll('.unit-row-cb').forEach(cb => { cb.checked = e.target.checked; }));
+      $('btn-batch-notice').addEventListener('click', () => {
+        const ids = Array.from(document.querySelectorAll('.unit-row-cb:checked')).map(cb => cb.getAttribute('data-id'));
+        if (!ids.length) { showToast('Vui lòng tích chọn ít nhất 1 đơn vị!', 'error'); return; }
+        ids.forEach(id => { State.work.units[id] = Object.assign({}, State.work.units[id], { actionStatus: 'DA_GUI_THONG_BAO', updatedAt: Date.now() }); });
+        recompute();
+        showToast(`Đã gán "Đã gửi thông báo" cho ${ids.length} đơn vị!`, 'success');
+      });
+
+      // Nạp file
+      const setupDropzone = (dzId, inputId, target) => {
+        const dz = $(dzId), input = $(inputId);
+        dz.addEventListener('click', () => input.click());
+        input.addEventListener('change', e => { if (e.target.files.length) startImport(e.target.files[0], target); input.value = ''; });
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('border-sky-500'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('border-sky-500'));
+        dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('border-sky-500'); if (e.dataTransfer.files.length) startImport(e.dataTransfer.files[0], target); });
+      };
+      setupDropzone('dz-bhxh-units', 'file-bhxh-units', 'BHXH_UNITS');
+      setupDropzone('dz-ext-units', 'file-ext-units', 'EXT_UNITS');
+      setupDropzone('dz-bhxh-emps', 'file-bhxh-emps', 'BHXH_EMPS');
+      setupDropzone('dz-ext-emps', 'file-ext-emps', 'EXT_EMPS');
+
+      // Modal ghép cột
+      $('map-sheet').addEventListener('change', e => { Import.ctx.sheetName = null; loadSheet(e.target.value); renderMappingBody(); });
+      $('map-header-row').addEventListener('change', e => {
+        const i = Math.max(0, (parseInt(e.target.value, 10) || 1) - 1);
+        loadSheet(Import.ctx.sheetName, Math.min(i, Math.max(0, Import.ctx.aoa.length - 1))); renderMappingBody();
+      });
+      $('map-fields').addEventListener('change', e => {
+        const s = e.target.closest('.map-field'); if (!s) return;
+        const f = s.getAttribute('data-field');
+        if (s.value === '') delete Import.ctx.mapping[f];
+        else {
+          const ci = parseInt(s.value, 10);
+          Object.keys(Import.ctx.mapping).forEach(k => { if (Import.ctx.mapping[k] === ci && k !== f) delete Import.ctx.mapping[k]; });
+          Import.ctx.mapping[f] = ci;
+        }
+        Import.ctx.fromProfile = false;
+        renderMappingBody();
+      });
+      ['map-source', 'map-default-mst'].forEach(id => $(id).addEventListener('change', renderMappingPreview));
+      $('btn-confirm-mapping').addEventListener('click', confirmImport);
+      $('btn-cancel-mapping').addEventListener('click', closeMapping);
+      $('btn-close-mapping').addEventListener('click', closeMapping);
+
+      // Modal đơn vị
+      $('btn-close-unit-modal').addEventListener('click', closeUnitModal);
+      $('btn-cancel-unit-modal').addEventListener('click', closeUnitModal);
+      $('btn-save-unit-modal').addEventListener('click', saveUnitModal);
+      $('m-unit-explanation-type').addEventListener('change', previewHintsInModal);
+      $('btn-print-unit-minute').addEventListener('click', () => printUnitMinutes(State.result.units.find(x => x.id === State.selectedUnitId)));
+      $('btn-unit-view-qtt').addEventListener('click', () => {
+        const u = State.result.units.find(x => x.id === State.selectedUnitId);
+        closeUnitModal();
+        if (u) showEmployeesOf(u.mst.parent);
+      });
+      $('btn-print-active-minutes').addEventListener('click', () => {
+        const ids = Array.from(document.querySelectorAll('.unit-row-cb:checked')).map(cb => cb.getAttribute('data-id'));
+        if (ids.length !== 1) { showToast('Hãy tích chọn đúng 1 đơn vị ở tab "Rà soát Đơn vị" (hoặc mở chi tiết đơn vị) để in biên bản.', 'error'); return; }
+        printUnitMinutes(State.result.units.find(x => x.id === ids[0]));
+      });
+
+      // Xuất & mẫu
+      $('btn-export-excel').addEventListener('click', exportExcel);
+      $('btn-download-unit-template').addEventListener('click', () => downloadTemplate([
+        ['Mã số thuế', 'Tên doanh nghiệp', 'Người đại diện pháp luật', 'Số CCCD người đại diện', 'Số điện thoại', 'Địa chỉ trụ sở', 'Ngày cấp', 'Số lao động', 'Tình trạng hoạt động'],
+        ['1809988771', 'Công ty TNHH Công Nghệ Số Tây Đô', 'Lâm Hoài An', '092085001111', '0909988771', '254 Nguyễn Văn Cừ, Cần Thơ', '05/02/2026', 8, 'Đang hoạt động']
+      ], 'Mau_DoanhNghiep', 'Mau_Du_Lieu_Doanh_Nghiep.xlsx'));
+      $('btn-download-hkd-template').addEventListener('click', () => downloadTemplate([
+        ['Mã số thuế / Mã HKD', 'Tên Hộ kinh doanh', 'Họ tên Chủ hộ', 'Số CCCD Chủ hộ', 'Số điện thoại', 'Địa chỉ kinh doanh', 'Số lao động', 'Phương pháp nộp thuế', 'Tình trạng hoạt động'],
+        ['8392100412', 'Hộ KD Tiệm Vàng Kim Phúc', 'Lý Kim Cương', '084091005566', '0909123888', '34 Nam Kỳ Khởi Nghĩa, Ninh Kiều', 4, 'Kê khai', 'Đang hoạt động']
+      ], 'Mau_HoKinhDoanh', 'Mau_Du_Lieu_Ho_Kinh_Doanh.xlsx'));
+      $('btn-download-emp-template').addEventListener('click', () => downloadTemplate([
+        ['Họ và tên', 'Số CCCD', 'Ngày sinh', 'Tên tổ chức trả thu nhập', 'MST tổ chức trả thu nhập', 'Tổng thu nhập chịu thuế', 'Số tháng'],
+        ['Nguyễn Văn An', '087095001234', '12/03/1995', 'Công ty CP Cơ Khí Vạn Phát', '1801234567', 120000000, 12]
+      ], 'Mau_LaoDong_QTT', 'Mau_Du_Lieu_Lao_Dong_QTT.xlsx'));
+
+      // Cấu hình & quản lý dữ liệu
+      $('btn-apply-settings').addEventListener('click', () => { readCfgFromUi(); writeCfgToUi(); recompute(); showToast('Đã áp dụng cấu hình và đối soát lại (giữ nguyên kết quả xác minh)!', 'success'); });
+      $('btn-clear-profiles').addEventListener('click', () => { Profiles.save({}); renderAll(); showToast('Đã xóa các cấu trúc cột đã ghi nhớ.', 'info'); });
+      $('btn-clear-all').addEventListener('click', async () => {
+        if (!confirm('Xóa TOÀN BỘ dữ liệu đã nạp và kết quả xác minh trong trình duyệt này? Không thể hoàn tác.')) return;
+        resetAll(false); await Store.del('session'); recompute(); showToast('Đã xóa toàn bộ dữ liệu.', 'info');
+      });
+
+      // Khôi phục phiên làm việc
+      const ok = await Store.open();
+      $('label-storage-status').innerText = ok ? '(Bộ nhớ trình duyệt: sẵn sàng)' : '(Trình duyệt chặn lưu trữ — dữ liệu sẽ mất khi tải lại trang)';
+      const saved = ok ? await Store.get('session') : null;
+      if (saved && saved.version === 2 && saved.ds) {
+        State.ds = Object.assign(State.ds, saved.ds);
+        State.work = Object.assign({ units: {}, emps: {} }, saved.work);
+        State.cfg = Object.assign(State.cfg, saved.cfg);
+        State.isDemo = !!saved.isDemo;
+      }
+      writeCfgToUi();
+      recompute();
+    });
+  })();
+  </script>
+</body>
+</html>
