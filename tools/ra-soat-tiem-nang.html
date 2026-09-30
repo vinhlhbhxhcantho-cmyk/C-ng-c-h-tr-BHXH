@@ -664,7 +664,15 @@
       </div>
       <div class="p-5 space-y-4 overflow-y-auto text-xs flex-1">
         <div class="text-slate-500">File: <strong id="map-file" class="text-slate-700">--</strong> <span id="map-tcvn3" class="hidden ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">Đã chuyển font TCVN3 → Unicode</span> <span id="map-profile" class="hidden ml-2 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">Dùng cấu trúc cột đã ghi nhớ</span></div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div id="map-diagnose" class="hidden space-y-1"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <label class="block"><span class="font-semibold text-slate-700 block mb-1">Loại dữ liệu</span>
+            <select id="map-target" class="w-full px-2 py-1.5 rounded-lg border border-slate-200">
+              <option value="BHXH_UNITS">1. CSDL Đơn vị BHXH</option>
+              <option value="EXT_UNITS">2. Đơn vị / Hộ KD đối soát</option>
+              <option value="BHXH_EMPS">3. CSDL Lao động BHXH</option>
+              <option value="EXT_EMPS">4. Lao động QTT / nguồn ngoài</option>
+            </select></label>
           <label class="block"><span class="font-semibold text-slate-700 block mb-1">Trang tính</span><select id="map-sheet" class="w-full px-2 py-1.5 rounded-lg border border-slate-200"></select></label>
           <label class="block"><span class="font-semibold text-slate-700 block mb-1">Dòng tiêu đề</span><input id="map-header-row" type="number" min="1" class="w-full px-2 py-1.5 rounded-lg border border-slate-200"></label>
           <label class="block" id="map-source-wrap"><span class="font-semibold text-slate-700 block mb-1">Nguồn dữ liệu</span><select id="map-source" class="w-full px-2 py-1.5 rounded-lg border border-slate-200"></select></label>
@@ -680,6 +688,10 @@
           <div id="map-fields" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
         </div>
         <div id="map-stats" class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600"></div>
+        <div>
+          <h5 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-2">Dữ liệu thô đọc được từ trang tính <span id="map-raw-size" class="font-normal normal-case text-slate-400"></span> <span class="font-normal normal-case text-slate-400">— bấm vào một dòng để chọn làm dòng tiêu đề</span></h5>
+          <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-60"><table class="w-full text-left text-[11px]" id="map-raw"></table></div>
+        </div>
         <div>
           <h5 class="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-2">Xem trước dữ liệu sau chuẩn hóa (8 dòng đầu)</h5>
           <div class="overflow-x-auto border border-slate-200 rounded-lg"><table class="w-full text-left text-[11px]" id="map-preview"></table></div>
@@ -1997,6 +2009,20 @@
       return XLSX.read(text, { type: 'string', cellDates: true });
     }
 
+    // Một số phần mềm xuất file khai báo sai vùng dữ liệu (vd. chỉ "A1") → tính lại từ các ô thực có
+    function fixRange(ws) {
+      if (!ws) return 0;
+      let r0 = Infinity, c0 = Infinity, r1 = -1, c1 = -1;
+      for (const k in ws) {
+        if (k[0] === '!') continue;
+        const a = XLSX.utils.decode_cell(k);
+        if (a.r < r0) r0 = a.r; if (a.c < c0) c0 = a.c; if (a.r > r1) r1 = a.r; if (a.c > c1) c1 = a.c;
+      }
+      if (r1 < 0) return 0;
+      ws['!ref'] = XLSX.utils.encode_range({ s: { r: r0, c: c0 }, e: { r: r1, c: c1 } });
+      return r1 - r0 + 1;
+    }
+
     function sheetToAoa(ws) {
       if (!ws || !ws['!ref']) return { aoa: [], tcvn3: false };
       const range = XLSX.utils.decode_range(ws['!ref']);
@@ -2015,24 +2041,37 @@
         try {
           const wb = readWorkbook(e.target.result, file.name);
           if (!wb || !wb.SheetNames || !wb.SheetNames.length) { showToast('Không đọc được trang tính nào từ file này!', 'error'); return; }
-          // Chọn trang tính có tiêu đề phù hợp nhất
-          let bestSheet = wb.SheetNames[0], bestScore = -1;
-          wb.SheetNames.forEach(n => {
-            const ws = wb.Sheets[n];
-            if (!ws || !ws['!ref']) return;
-            const rg = XLSX.utils.decode_range(ws['!ref']);
-            const head = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', range: { s: rg.s, e: { r: Math.min(rg.e.r, rg.s.r + 40), c: rg.e.c } } });
-            const s = C.detectHeader(head, target).score;
-            if (s > bestScore) { bestScore = s; bestSheet = n; }
-          });
-          Import.ctx = { target, fileName: file.name, wb };
-          openMappingModal(bestSheet);
+          const rowCounts = {};
+          wb.SheetNames.forEach(n => { rowCounts[n] = fixRange(wb.Sheets[n]); });
+          if (!wb.SheetNames.some(n => rowCounts[n] > 0)) {
+            showToast('File không có ô dữ liệu nào đọc được. Nếu file được lưu dạng "Strict Open XML" hoặc xuất từ phần mềm khác, hãy mở bằng Excel → Lưu thành (Save As) → "Excel Workbook (*.xlsx)" rồi nạp lại.', 'error');
+            return;
+          }
+          Import.ctx = { target, fileName: file.name, wb, rowCounts };
+          openMappingModal(pickSheet(target));
         } catch (err) {
           console.error(err);
-          showToast('Định dạng tệp chưa tương thích. Vui lòng kiểm tra file hoặc tải Mẫu Excel chuẩn!', 'error');
+          const msg = String(err && err.message || '');
+          if (/password|encrypt/i.test(msg)) showToast('File đang đặt mật khẩu. Hãy mở bằng Excel, gỡ mật khẩu, lưu lại rồi nạp.', 'error');
+          else showToast('Định dạng tệp chưa tương thích (' + msg.slice(0, 80) + '). Thử mở bằng Excel và Lưu thành "Excel Workbook (*.xlsx)".', 'error');
         }
       };
       reader.readAsArrayBuffer(file);
+    }
+
+    // Chọn trang tính có tiêu đề phù hợp nhất; bằng điểm thì lấy trang nhiều dòng hơn
+    function pickSheet(target) {
+      const ctx = Import.ctx;
+      let best = ctx.wb.SheetNames[0], bestKey = [-1, -1];
+      ctx.wb.SheetNames.forEach(n => {
+        const ws = ctx.wb.Sheets[n];
+        if (!ctx.rowCounts[n]) return;
+        const rg = XLSX.utils.decode_range(ws['!ref']);
+        const head = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', range: { s: rg.s, e: { r: Math.min(rg.e.r, rg.s.r + 40), c: rg.e.c } } });
+        const key = [C.detectHeader(head, target).score, ctx.rowCounts[n]];
+        if (key[0] > bestKey[0] || (key[0] === bestKey[0] && key[1] > bestKey[1])) { bestKey = key; best = n; }
+      });
+      return best;
     }
 
     function loadSheet(sheetName, headerRowIdx) {
@@ -2061,6 +2100,7 @@
       ctx.sheetName = null;
       loadSheet(sheetName);
       const schema = C.SCHEMAS[ctx.target];
+      $('map-target').value = ctx.target;
       $('map-title').innerText = schema.label;
       $('map-file').innerText = ctx.fileName;
       $('map-sheet').innerHTML = ctx.wb.SheetNames.map(n => `<option value="${esc(n)}"${n === sheetName ? ' selected' : ''}>${esc(n)}</option>`).join('');
@@ -2083,6 +2123,7 @@
       $('map-header-row').value = ctx.header.headerRow + 1;
       $('map-tcvn3').classList.toggle('hidden', !ctx.tcvn3);
       $('map-profile').classList.toggle('hidden', !ctx.fromProfile);
+      renderRawAndDiagnose();
       const colOpts = ctx.header.rawHeaders.map((h, i) => ({ i, label: `Cột ${colLetter(i)}: ${h || '(trống)'}` }));
       $('map-fields').innerHTML = schema.fields.map(f => `
         <label class="flex items-center gap-2 p-2 rounded-lg border ${ctx.mapping[f.key] !== undefined ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'}">
@@ -2093,6 +2134,35 @@
           </select>
         </label>`).join('');
       renderMappingPreview();
+    }
+
+    const TARGET_LABEL = { BHXH_UNITS: '1. CSDL Đơn vị BHXH', EXT_UNITS: '2. Đơn vị / Hộ KD đối soát', BHXH_EMPS: '3. CSDL Lao động BHXH', EXT_EMPS: '4. Lao động QTT / nguồn ngoài' };
+    function renderRawAndDiagnose() {
+      const ctx = Import.ctx;
+      const aoa = ctx.aoa;
+      const nonEmpty = aoa.filter(r => r && r.some(c => c !== '' && c !== null && c !== undefined)).length;
+      const width = Math.min(15, aoa.reduce((m, r) => Math.max(m, r ? r.length : 0), 0));
+      $('map-raw-size').innerText = `(${aoa.length.toLocaleString('vi-VN')} dòng, ${nonEmpty.toLocaleString('vi-VN')} dòng có dữ liệu)`;
+      const shown = aoa.slice(0, 20);
+      $('map-raw').innerHTML = `<tbody class="divide-y divide-slate-100">${shown.map((r, i) => `
+        <tr class="raw-row cursor-pointer hover:bg-sky-50 ${i === ctx.header.headerRow ? 'bg-emerald-50 font-semibold' : ''}" data-row="${i}">
+          <td class="py-1 px-2 text-slate-400 whitespace-nowrap">${i + 1}${i === ctx.header.headerRow ? ' ◀ tiêu đề' : ''}</td>
+          ${Array.from({ length: width }, (_, c) => { const v = r ? r[c] : ''; return `<td class="py-1 px-2 whitespace-nowrap max-w-[160px] truncate">${esc(v instanceof Date ? C.toDateString(v) : v)}</td>`; }).join('')}
+        </tr>`).join('') || '<tr><td class="p-3 text-slate-400">Trang tính trống.</td></tr>'}</tbody>`;
+
+      const notes = [];
+      if (!nonEmpty) notes.push(['error', 'Trang tính này không có dữ liệu. Hãy chọn trang tính khác.']);
+      // Gợi ý loại dữ liệu phù hợp hơn
+      const scores = Object.keys(TARGET_LABEL).map(t => [t, C.detectHeader(aoa, t).score]);
+      const cur = scores.find(x => x[0] === ctx.target)[1];
+      const best = scores.reduce((a, b) => (b[1] > a[1] ? b : a));
+      if (best[0] !== ctx.target && best[1] >= cur + 2) {
+        notes.push(['warn', `Cấu trúc cột của file giống <strong>${esc(TARGET_LABEL[best[0]])}</strong> hơn (khớp ${best[1]} trường, so với ${cur} trường). <button class="btn-switch-target ml-1 px-2 py-0.5 rounded bg-amber-600 text-white font-semibold" data-target="${best[0]}">Chuyển sang loại này</button>`]);
+      }
+      if (nonEmpty && ctx.header.score === 0) notes.push(['error', 'Không nhận ra tên cột nào ở dòng tiêu đề. Xem bảng "Dữ liệu thô" bên dưới và bấm vào đúng dòng tiêu đề, hoặc tự chọn cột cho từng trường.']);
+      const box = $('map-diagnose');
+      box.classList.toggle('hidden', !notes.length);
+      box.innerHTML = notes.map(n => `<div class="p-2.5 rounded-lg border ${n[0] === 'error' ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-amber-300 bg-amber-50 text-amber-900'}"><i class="fa-solid ${n[0] === 'error' ? 'fa-circle-exclamation' : 'fa-lightbulb'} mr-1"></i>${n[1]}</div>`).join('');
     }
 
     const PREVIEW_COLS = {
@@ -2449,6 +2519,13 @@
       });
       ['map-source', 'map-default-mst'].forEach(id => $(id).addEventListener('change', renderMappingPreview));
       $('btn-confirm-mapping').addEventListener('click', confirmImport);
+      const switchTarget = t => { Import.ctx.target = t; openMappingModal(Import.ctx.sheetName || pickSheet(t)); };
+      $('map-target').addEventListener('change', e => switchTarget(e.target.value));
+      $('map-diagnose').addEventListener('click', e => { const b = e.target.closest('.btn-switch-target'); if (b) switchTarget(b.getAttribute('data-target')); });
+      $('map-raw').addEventListener('click', e => {
+        const r = e.target.closest('.raw-row'); if (!r) return;
+        loadSheet(Import.ctx.sheetName, parseInt(r.getAttribute('data-row'), 10)); renderMappingBody();
+      });
       $('btn-cancel-mapping').addEventListener('click', closeMapping);
       $('btn-close-mapping').addEventListener('click', closeMapping);
 
