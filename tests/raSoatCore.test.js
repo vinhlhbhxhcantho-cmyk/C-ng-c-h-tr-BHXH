@@ -223,7 +223,7 @@ test('Bảng 1 kèm biên bản: đủ họ tên, mã BHXH, ngày sinh theo gi�
   const res = C.reconcile(scenario(), {}, {});
   const unit = { mst: C.normalizeMST('1801234567') };
   const list = plain(C.laborListForUnit(res, unit));
-  assert.deepEqual(list.map(r => r.hoTen), ['Huỳnh Thanh Phong', 'Phạm Minh Khoa', 'Võ Thị Lan']);
+  assert.deepEqual(list.map(r => r.hoTen), ['Huỳnh Thanh Phong', 'Võ Thị Lan']); // người đóng nơi khác chuyển sang Bảng 6
   const lan = list.find(r => r.hoTen === 'Võ Thị Lan');
   assert.equal(lan.maSoBhxh, '7911223344'); // lấy từ CSDL BHXH khi đã có sổ
   assert.equal(lan.gioiTinh, 'NAM'); // CCCD 083092… → chữ số thứ 4 = 0 (Nam, sinh thế kỷ 20)
@@ -232,4 +232,16 @@ test('Bảng 1 kèm biên bản: đủ họ tên, mã BHXH, ngày sinh theo gi�
   assert.equal(C.genderOf({ gioiTinh: 'Nữ', cccd: { kind: 'CCCD', key: '086095007788' } }), 'NU');
   assert.equal(C.genderOf({ cccd: { kind: 'CCCD', key: '089300005511' } }), 'NU');
   assert.equal(C.genderOf({ cccd: { kind: 'CCCD', key: '086095007788' } }), 'NAM');
+});
+
+test('Biên bản Mẫu 06-KT: chia lao động QTT theo Bảng 1 / Bảng 6 và đếm đúng', () => {
+  const res = C.reconcile(scenario(), {}, {});
+  const d = plain(C.minutesData(res, { mst: C.normalizeMST('1801234567') }));
+  assert.equal(d.total, 5);
+  assert.equal(d.joined, 2);
+  assert.equal(d.chua, 1);
+  assert.equal(d.ngung, 1);
+  assert.equal(d.khac, 1);
+  assert.deepEqual(d.bang6.map(r => [r.hoTen, r.tenDvKhac, r.maDvKhac, r.maSoBhxh]), [['Phạm Minh Khoa', 'Công ty Điện Lực', 'DL01', '7922334455']]);
+  assert.equal(C.minutesData(res, { mst: C.normalizeMST('') }).total, 0);
 });
