@@ -218,3 +218,18 @@ test('reconcile giữ kết quả xác minh thủ công qua các lần chạy l�
   assert.equal(sum.u.suspect, 2);
   assert.equal(sum.u.stopped, 1);
 });
+
+test('Bảng 1 kèm biên bản: đủ họ tên, mã BHXH, ngày sinh theo giới tính, ghi chú', () => {
+  const res = C.reconcile(scenario(), {}, {});
+  const unit = { mst: C.normalizeMST('1801234567') };
+  const list = plain(C.laborListForUnit(res, unit));
+  assert.deepEqual(list.map(r => r.hoTen), ['Huỳnh Thanh Phong', 'Phạm Minh Khoa', 'Võ Thị Lan']);
+  const lan = list.find(r => r.hoTen === 'Võ Thị Lan');
+  assert.equal(lan.maSoBhxh, '7911223344'); // lấy từ CSDL BHXH khi đã có sổ
+  assert.equal(lan.gioiTinh, 'NAM'); // CCCD 083092… → chữ số thứ 4 = 0 (Nam, sinh thế kỷ 20)
+  assert.ok(list.find(r => r.hoTen === 'Huỳnh Thanh Phong').ghiChu.includes('CCCD 086095007788'));
+  assert.ok(list.find(r => r.hoTen === 'Huỳnh Thanh Phong').ghiChu.includes('8.000.000'));
+  assert.equal(C.genderOf({ gioiTinh: 'Nữ', cccd: { kind: 'CCCD', key: '086095007788' } }), 'NU');
+  assert.equal(C.genderOf({ cccd: { kind: 'CCCD', key: '089300005511' } }), 'NU');
+  assert.equal(C.genderOf({ cccd: { kind: 'CCCD', key: '086095007788' } }), 'NAM');
+});

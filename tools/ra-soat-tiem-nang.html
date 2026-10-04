@@ -23,10 +23,15 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     @media print {
-      body * { visibility: hidden; }
-      #printable-report, #printable-report * { visibility: visible; }
-      #printable-report { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+      body > *:not(#printable-report) { display: none !important; }
+      body { background: #fff !important; min-height: 0 !important; }
+      #printable-report { display: block !important; }
+      .labor-table { page-break-before: always; }
+      .labor-table thead { display: table-header-group; }
+      .labor-table tr { page-break-inside: avoid; }
     }
+    @page { size: A4; margin: 15mm 12mm; }
+    #minutes-doc p { margin: 4pt 0; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
@@ -805,6 +810,7 @@
       <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
         <div class="flex items-center gap-2">
           <button id="btn-print-unit-minute" class="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5"><i class="fa-solid fa-file-contract text-sky-600"></i> In biên bản làm việc</button>
+          <button id="btn-word-unit-minute" class="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5"><i class="fa-solid fa-file-word text-blue-600"></i> Tải biên bản (Word)</button>
           <button id="btn-unit-view-qtt" class="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5"><i class="fa-solid fa-users text-indigo-600"></i> Xem LĐ theo QTT</button>
         </div>
         <div class="flex items-center gap-2">
@@ -815,44 +821,41 @@
     </div>
   </div>
 
-  <div id="printable-report" class="hidden bg-white p-8 text-black text-sm max-w-4xl mx-auto space-y-4 font-serif">
-    <div class="grid grid-cols-2 text-center text-xs">
-      <div>
-        <p class="font-bold uppercase">BẢO HIỂM XÃ HỘI TỈNH / HUYỆN</p>
-        <p class="font-bold underline uppercase">TỔ QUẢN LÝ THU & PHÁT TRIỂN ĐỐI TƯỢNG</p>
-        <p class="mt-1">Số: ......./BB-BHXH</p>
-      </div>
-      <div>
-        <p class="font-bold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-        <p class="font-bold underline">Độc lập - Tự do - Hạnh phúc</p>
-        <p class="mt-1 italic" id="print-date">Ngày ..... tháng ..... năm .....</p>
-      </div>
-    </div>
-    <div class="text-center py-4">
-      <h2 class="font-bold text-base uppercase">BIÊN BẢN LÀM VIỆC</h2>
-      <p class="italic text-xs">V/v: Rà soát, xác minh tình hình tham gia BHXH, BHYT, BHTN của đơn vị theo dữ liệu đối soát liên ngành</p>
-    </div>
-    <div class="space-y-2 text-xs leading-relaxed">
-      <p>Hôm nay, vào lúc ..... giờ ..... ngày ..... tháng ..... năm ........, tại địa chỉ: <span id="print-unit-address" class="font-semibold underline">....................................................................</span></p>
-      <p class="font-bold">I. ĐẠI DIỆN CƠ QUAN BẢO HIỂM XÃ HỘI:</p>
-      <p>- Ông/Bà: <span id="print-officer-name" class="font-semibold">....................................................</span> Chức vụ: Cán bộ Tổ Quản lý Thu</p>
-      <p>- Ông/Bà: .................................................... Chức vụ: ................................................................</p>
-      <p class="font-bold mt-2">II. ĐẠI DIỆN ĐƠN VỊ / HỘ KINH DOANH ĐƯỢC RÀ SOÁT:</p>
-      <p>- Tên đơn vị: <span id="print-unit-name" class="font-bold text-sm uppercase">....................................................................................................</span></p>
-      <p>- Mã số thuế (MST): <span id="print-unit-mst" class="font-bold">................................................</span> Điện thoại: <span id="print-unit-phone">................................</span></p>
-      <p>- Người đại diện pháp luật / Chủ hộ: <span id="print-unit-rep" class="font-semibold">....................................................</span> Chức vụ: ........................</p>
-      <p class="font-bold mt-2">III. NỘI DUNG VÀ KẾT QUẢ LÀM VIỆC:</p>
-      <p>1. Tình trạng hoạt động thực tế của đơn vị: <span id="print-active-status" class="font-bold underline">....................................................</span></p>
-      <p>2. Số lao động đang làm việc tại đơn vị: ............. người (Trong đó số thuộc diện tham gia BHXH bắt buộc: ............. người).</p>
-      <p>3. Tình hình tham gia BHXH, BHYT, BHTN: <span id="print-bhxh-status" class="font-bold underline">....................................................</span></p>
-      <p>4. Ý kiến giải trình của Đơn vị:</p>
-      <div id="print-unit-explanation" class="p-2 border border-black/40 min-h-[60px] italic">....................................................................................................</div>
-      <p>5. Kết luận & Cam kết của Đơn vị:</p>
-      <p>- Đơn vị cam kết nộp hồ sơ báo tăng tham gia BHXH, BHYT, BHTN cho người lao động đúng quy định trước ngày: ........./........./.........</p>
-    </div>
-    <div class="grid grid-cols-2 text-center pt-8 text-xs">
-      <div><p class="font-bold uppercase">ĐẠI DIỆN ĐƠN VỊ / HỘ KINH DOANH</p><p class="italic text-[10px]">(Ký, ghi rõ họ tên và đóng dấu nếu có)</p></div>
-      <div><p class="font-bold uppercase">ĐẠI DIỆN CƠ QUAN BẢO HIỂM XÃ HỘI</p><p class="italic text-[10px]">(Ký và ghi rõ họ tên)</p></div>
+  <div id="printable-report" class="hidden">
+    <div id="minutes-doc" style="font-family:'Times New Roman',serif;font-size:13pt;color:#000;line-height:1.35;">
+      <table style="width:100%;border-collapse:collapse;text-align:center;font-size:12pt;">
+        <tr>
+          <td style="width:45%;vertical-align:top;"><b>BẢO HIỂM XÃ HỘI ...........</b><br><b><u>.................................</u></b><br>Số: ......./BB-BHXH</td>
+          <td style="width:55%;vertical-align:top;"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b><u>Độc lập - Tự do - Hạnh phúc</u></b><br><i id="print-date">Ngày ..... tháng ..... năm .....</i></td>
+        </tr>
+      </table>
+      <p style="text-align:center;margin:18px 0 0;"><b>BIÊN BẢN LÀM VIỆC</b></p>
+      <p style="text-align:center;margin:0 0 12px;"><i>V/v rà soát, xác minh tình hình tham gia BHXH, BHYT, BHTN, BHTNLĐ-BNN của đơn vị</i></p>
+      <p>Hôm nay, vào lúc ..... giờ ..... ngày ..... tháng ..... năm ........, tại địa chỉ: <span id="print-unit-address">..........................................</span></p>
+      <p><b>I. ĐẠI DIỆN CƠ QUAN BẢO HIỂM XÃ HỘI:</b></p>
+      <p>- Ông/Bà: <span id="print-officer-name">..........................</span> &nbsp;&nbsp;Chức vụ: Cán bộ quản lý thu</p>
+      <p>- Ông/Bà: ............................................ &nbsp;&nbsp;Chức vụ: ..........................</p>
+      <p><b>II. ĐẠI DIỆN ĐƠN VỊ / HỘ KINH DOANH:</b></p>
+      <p>- Tên đơn vị: <b id="print-unit-name">..........................</b></p>
+      <p>- Mã số thuế: <b id="print-unit-mst">..........................</b> &nbsp;&nbsp;Điện thoại: <span id="print-unit-phone">..........................</span></p>
+      <p>- Người đại diện theo pháp luật / Chủ hộ: <span id="print-unit-rep">..........................</span> &nbsp;&nbsp;Chức vụ: ..........................</p>
+      <p><b>III. NỘI DUNG VÀ KẾT QUẢ LÀM VIỆC:</b></p>
+      <p>1. Tình trạng hoạt động thực tế của đơn vị: <span id="print-active-status">..........................</span></p>
+      <p>2. Số lao động đang làm việc tại đơn vị: ............. người (trong đó thuộc diện tham gia BHXH bắt buộc: ............. người).</p>
+      <p>3. Tình hình tham gia BHXH, BHYT, BHTN, BHTNLĐ-BNN: <span id="print-bhxh-status">..........................</span></p>
+      <p id="print-labor-intro"></p>
+      <p>4. Ý kiến giải trình của đơn vị:</p>
+      <p id="print-unit-explanation" style="border:1px solid #000;padding:6px;min-height:50px;"><i>.................................................................................................</i></p>
+      <p>5. Kết luận và cam kết của đơn vị:</p>
+      <p>- Đơn vị cam kết lập hồ sơ đăng ký, điều chỉnh đóng BHXH, BHYT, BHTN, BHTNLĐ-BNN cho người lao động thuộc diện tham gia bắt buộc trước ngày ........./........./.........</p>
+      <p>Biên bản lập thành 02 bản có giá trị như nhau, mỗi bên giữ 01 bản.</p>
+      <table style="width:100%;border-collapse:collapse;text-align:center;margin-top:16px;">
+        <tr>
+          <td style="width:50%;vertical-align:top;"><b>ĐẠI DIỆN ĐƠN VỊ / HỘ KINH DOANH</b><br><i>(Ký, ghi rõ họ tên, đóng dấu nếu có)</i></td>
+          <td style="width:50%;vertical-align:top;"><b>ĐẠI DIỆN CƠ QUAN BẢO HIỂM XÃ HỘI</b><br><i>(Ký, ghi rõ họ tên)</i></td>
+        </tr>
+      </table>
+      <div id="print-labor-table"></div>
     </div>
   </div>
 
@@ -1118,7 +1121,9 @@
           F('mstDonVi', 'MST đơn vị chi trả', ['mst to chuc tra thu nhap', 'ma so thue to chuc tra thu nhap', 'mst don vi', 'ma so thue don vi', 'mst to chuc', 'ma so thue to chuc', 'mst dn', 'ma so thue doanh nghiep', 'mst don vi chi tra', 'ma so thue', 'mst'], { excl: ['ca nhan', 'nld', 'nguoi lao dong'] }),
           F('thuNhap', 'Tổng thu nhập chịu thuế', ['tong thu nhap chiu thue', 'thu nhap chiu thue', 'tong tnct', 'tnct', 'tong thu nhap', 'thu nhap'], { excl: ['mien', 'giam', 'khong chiu', 'ma so', 'mst', 'to chuc', 'don vi'] }),
           F('soThang', 'Số tháng có thu nhập', ['so thang', 'so thang lam viec', 'so thang co thu nhap']),
-          F('maSoBhxh', 'Mã số BHXH', ['ma so bhxh', 'ma bhxh', 'so so bhxh'])
+          F('maSoBhxh', 'Mã số BHXH', ['ma so bhxh', 'ma bhxh', 'so so bhxh']),
+          F('gioiTinh', 'Giới tính', ['gioi tinh', 'nam nu', 'phai']),
+          F('chucDanh', 'Chức danh / vị trí', ['chuc danh', 'chuc vu', 'vi tri cong viec', 'vi tri', 'nghe nghiep', 'cong viec'], { excl: ['ma', 'don vi', 'to chuc'] })
         ],
         requiredAny: [['cccd', 'mstCaNhan', 'ngaySinh']]
       }
@@ -1264,7 +1269,7 @@
           const cccd = normalizePersonId(get(row, 'cccd'));
           if (!isEmpty(get(row, 'cccd')) && !cccd.key) stats.invalidId++;
           const trangThaiRaw = cleanText(get(row, 'trangThai'));
-          rec = { hoTen, nameKey: nameKey(hoTen), maSoBhxh: normalizeBhxhCode(get(row, 'maSoBhxh')), cccd, namSinh: parseYear(get(row, 'ngaySinh')),
+          rec = { hoTen, nameKey: nameKey(hoTen), maSoBhxh: normalizeBhxhCode(get(row, 'maSoBhxh')), cccd, namSinh: parseYear(get(row, 'ngaySinh')), ngaySinh: toDateString(get(row, 'ngaySinh')),
             maDonVi: normCode(get(row, 'maDonVi')), tenDonVi: cleanText(get(row, 'tenDonVi')), mstDonVi: normalizeMST(get(row, 'mstDonVi')),
             trangThaiRaw, inactive: isInactiveStatus(trangThaiRaw), mucLuong: parseNumber(get(row, 'mucLuong')) };
         } else if (target === 'EXT_EMPS') {
@@ -1277,6 +1282,7 @@
           let mstDonVi = normalizeMST(get(row, 'mstDonVi'));
           if (!mstDonVi.key && defaultMst.key) mstDonVi = defaultMst;
           rec = { hoTen, nameKey: nameKey(hoTen), cccd, mstCaNhan: mstCaNhan.key, namSinh: parseYear(get(row, 'ngaySinh')),
+            ngaySinh: toDateString(get(row, 'ngaySinh')), gioiTinh: cleanText(get(row, 'gioiTinh')), chucDanh: cleanText(get(row, 'chucDanh')),
             tenDonVi: cleanText(get(row, 'tenDonVi')) || (opts.defaultUnitName || ''), mstDonVi,
             thuNhap: parseNumber(get(row, 'thuNhap')), soThang: parseCount(get(row, 'soThang')),
             maSoBhxh: normalizeBhxhCode(get(row, 'maSoBhxh')), source: opts.source || 'THUE_QTT' };
@@ -1433,7 +1439,7 @@
         const w = wEmps[id] || {};
         const autoStatus = status;
         if (w.verdict === 'DA_THAM_GIA' || w.verdict === 'CHUA_THAM_GIA') { status = w.verdict; note = '(Kết luận xác minh thủ công) ' + note; }
-        return Object.assign({}, x, { id, reconcileStatus: status, autoStatus, matchedEmp: m ? { hoTen: m.hoTen, maSoBhxh: m.maSoBhxh, unit: m._unitName, mst: m._mstParent, mucLuong: m.mucLuong } : null,
+        return Object.assign({}, x, { id, reconcileStatus: status, autoStatus, matchedEmp: m ? { hoTen: m.hoTen, maSoBhxh: m.maSoBhxh, unit: m._unitName, mst: m._mstParent, mucLuong: m.mucLuong, ngaySinh: m.ngaySinh } : null,
           matchNote: note, incomeFlag, verdict: w.verdict || '', actionStatus: w.actionStatus || 'CHUA_TIEP_CAN', officer: w.officer || '', notes: w.notes || '' });
       });
 
@@ -1545,6 +1551,38 @@
       return hints;
     }
 
+    // Giới tính: theo cột giới tính nếu có, nếu không suy từ chữ số thứ 4 của CCCD (chẵn = Nam, lẻ = Nữ)
+    function genderOf(e) {
+      const g = normalizeVN(e.gioiTinh);
+      if (g) { if (/\bnu\b|^f/.test(g)) return 'NU'; if (/\bnam\b|^m/.test(g)) return 'NAM'; }
+      if (e.cccd && e.cccd.kind === 'CCCD') return parseInt(e.cccd.key[3], 10) % 2 === 0 ? 'NAM' : 'NU';
+      return '';
+    }
+    // Danh sách lao động chưa tham gia của một đơn vị (dùng cho Bảng 1 kèm biên bản)
+    function laborListForUnit(res, unit) {
+      const p = unit && unit.mst && unit.mst.parent;
+      if (!p) return [];
+      return res.emps
+        .filter(e => e.mstDonVi && e.mstDonVi.parent === p && UNJOINED_EMP.includes(e.reconcileStatus))
+        .map(e => {
+          const months = e.soThang > 0 && e.soThang <= 12 ? e.soThang : 12;
+          const notes = [];
+          if (e.cccd && e.cccd.key) notes.push((e.cccd.kind === 'CMND' ? 'CMND ' : 'CCCD ') + e.cccd.key);
+          if (e.reconcileStatus === 'KHAC_DON_VI') notes.push('Đang đóng tại ' + (e.matchedEmp ? e.matchedEmp.unit : 'đơn vị khác'));
+          if (e.reconcileStatus === 'NGUNG_DONG') notes.push('Đã báo giảm');
+          if (e.thuNhap) notes.push('TN chịu thuế BQ ' + Math.round(e.thuNhap / months).toLocaleString('vi-VN') + ' đ/tháng (QTT)');
+          return {
+            hoTen: e.hoTen,
+            maSoBhxh: (e.matchedEmp && e.matchedEmp.maSoBhxh) || e.maSoBhxh || '',
+            ngaySinh: e.ngaySinh || (e.matchedEmp && e.matchedEmp.ngaySinh) || (e.namSinh ? String(e.namSinh) : ''),
+            gioiTinh: genderOf(e),
+            chucDanh: e.chucDanh || '',
+            ghiChu: notes.join('; ')
+          };
+        })
+        .sort((a, b) => a.hoTen.localeCompare(b.hoTen, 'vi'));
+    }
+
     function summarize(res) {
       const units = res.units, emps = res.emps;
       const u = { total: units.length, joined: 0, stopped: 0, suspect: 0, unjoined: 0, inactive: 0, explained: 0, explainedWarn: 0, potential: 0, success: 0, rate: 0 };
@@ -1591,7 +1629,7 @@
       looksLikeTCVN3, tcvn3ToUnicode, normalizeMST, normalizePersonId, normalizeBhxhCode,
       isInactiveStatus, mapActiveStatus, mapTaxMethod, nameCore, similarity,
       SCHEMAS, scoreHeader, suggestMapping, applyMerges, isNumberingRow, buildHeaderAt, detectHeader,
-      extractRecords, KEY_FN, mergeRecords, reconcile, legalHints, summarize, LABELS
+      extractRecords, KEY_FN, mergeRecords, reconcile, legalHints, summarize, genderOf, laborListForUnit, LABELS
     };
   })(typeof window !== 'undefined' ? window : globalThis);
   </script>
@@ -1961,20 +1999,20 @@
       showToast('Đã lưu kết quả xác minh đơn vị!', 'success');
     }
 
-    function printUnitMinutes(u) {
-      if (!u) { showToast('Chưa chọn đơn vị để in biên bản!', 'error'); return; }
+    function fillMinutes(u) {
       const now = new Date();
-      $('print-date').innerText = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
-      $('print-unit-name').innerText = u.ten;
-      $('print-unit-mst').innerText = u.mst.key || '..........................';
-      $('print-unit-phone').innerText = u.dienThoai || '..........................';
-      $('print-unit-rep').innerText = u.nguoiDaiDien || '..........................';
-      $('print-unit-address').innerText = u.diaChi || '..........................................................';
-      $('print-officer-name').innerText = u.officer || '..........................';
-      $('print-active-status').innerText = L.active[u.activeStatus];
-      $('print-bhxh-status').innerText = u.reconcileStatus === 'DA_THAM_GIA'
-        ? `Đã đăng ký tham gia (Mã ĐV: ${u.matchedUnit ? u.matchedUnit.maDonVi : ''})`
-        : (u.reconcileStatus === 'NGUNG_DONG' ? 'Đã có mã đơn vị nhưng đang ngừng / tạm dừng đóng' : 'Chưa đăng ký tham gia đóng BHXH, BHYT, BHTN bắt buộc');
+      const T = (id, v) => { $(id).textContent = v; };
+      T('print-date', `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`);
+      T('print-unit-name', u.ten);
+      T('print-unit-mst', u.mst.key || '..........................');
+      T('print-unit-phone', u.dienThoai || '..........................');
+      T('print-unit-rep', u.nguoiDaiDien || '..........................');
+      T('print-unit-address', u.diaChi || '..........................................................');
+      T('print-officer-name', u.officer || '..........................');
+      T('print-active-status', L.active[u.activeStatus]);
+      T('print-bhxh-status', u.reconcileStatus === 'DA_THAM_GIA'
+        ? `Đã đăng ký tham gia (Mã đơn vị: ${u.matchedUnit ? u.matchedUnit.maDonVi : ''})`
+        : (u.reconcileStatus === 'NGUNG_DONG' ? 'Đã có mã đơn vị nhưng đang ngừng / tạm dừng đóng' : 'Chưa đăng ký tham gia đóng BHXH, BHYT, BHTN, BHTNLĐ-BNN bắt buộc'));
       const map = {
         CHUA_CO_LAO_DONG: 'Đơn vị mới thành lập, hiện chỉ có người quản lý / thành viên sáng lập tự điều hành, chưa tuyển dụng người lao động.',
         LAO_DONG_THOI_VU: 'Đơn vị chỉ sử dụng người lao động có hợp đồng lao động dưới 1 tháng.',
@@ -1983,9 +2021,59 @@
         HKD_KHONG_THUE_LAO_DONG: 'Hộ kinh doanh do các thành viên gia đình tự làm, không thuê mướn lao động.',
         DONG_NOI_KHAC: 'Người lao động của đơn vị đã tham gia BHXH tại nơi làm việc khác.'
       };
-      $('print-unit-explanation').innerText = [map[u.explanationType], u.notes].filter(Boolean).join(' ') || '...................................................................................................';
+      T('print-unit-explanation', [map[u.explanationType], u.notes].filter(Boolean).join(' ') || '.................................................................................................');
+
+      const list = C.laborListForUnit(State.result, u);
+      T('print-labor-intro', list.length
+        ? `Theo dữ liệu quyết toán thuế TNCN do cơ quan Thuế cung cấp, có ${list.length} người lao động nhận thu nhập từ đơn vị nhưng chưa tham gia BHXH, BHYT, BHTN, BHTNLĐ-BNN bắt buộc tại đơn vị (chi tiết tại Bảng 1 kèm theo).`
+        : '');
+      const B = 'border:1px solid #000;padding:3px 4px;';
+      const head = `
+        <tr><th rowspan="3" style="${B}width:5%">Số TT</th><th rowspan="3" style="${B}width:17%">Họ và tên</th><th rowspan="3" style="${B}width:10%">Mã số BHXH</th>
+          <th colspan="2" rowspan="2" style="${B}">Ngày tháng năm sinh</th><th rowspan="3" style="${B}width:13%">Cấp bậc, chức vụ, chức danh nghề, nơi làm việc</th>
+          <th colspan="6" style="${B}">Tiền lương</th><th rowspan="3" style="${B}width:15%">Ghi chú</th></tr>
+        <tr><th rowspan="2" style="${B}">Mức lương</th><th colspan="5" style="${B}">Phụ cấp</th></tr>
+        <tr><th style="${B}">Nam</th><th style="${B}">Nữ</th><th style="${B}">Chức vụ</th><th style="${B}">Thâm niên VK (%)</th><th style="${B}">Thâm niên nghề (%)</th><th style="${B}">Phụ cấp lương khác</th><th style="${B}">Các khoản bổ sung</th></tr>
+        <tr>${['A', 'B', 'C', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(c => `<th style="${B}font-weight:normal">${c}</th>`).join('')}</tr>`;
+      const rows = list.map((r, i) => `<tr>
+          <td style="${B}text-align:center">${i + 1}</td><td style="${B}">${esc(r.hoTen)}</td><td style="${B}text-align:center">${esc(r.maSoBhxh)}</td>
+          <td style="${B}text-align:center">${r.gioiTinh === 'NAM' ? esc(r.ngaySinh) : ''}</td><td style="${B}text-align:center">${r.gioiTinh === 'NU' ? esc(r.ngaySinh) : ''}</td>
+          <td style="${B}">${esc(r.chucDanh)}</td>
+          <td style="${B}"></td><td style="${B}"></td><td style="${B}"></td><td style="${B}"></td><td style="${B}"></td><td style="${B}"></td>
+          <td style="${B}font-size:9pt">${esc(r.ghiChu)}${r.gioiTinh ? '' : (r.ngaySinh ? '; Ngày sinh ' + esc(r.ngaySinh) + ' (chưa rõ giới tính)' : '')}</td></tr>`).join('');
+      $('print-labor-table').innerHTML = list.length ? `
+        <div class="labor-table" style="page-break-before:always;">
+          <p style="text-align:center;margin:0 0 6px;"><i>Bảng 1:</i> <b>DANH SÁCH LAO ĐỘNG CHƯA THAM GIA BHXH, BHYT, BHTN, BHTNLĐ-BNN BẮT BUỘC</b><br><i>(Kèm theo Biên bản làm việc với ${esc(u.ten)} — MST ${esc(u.mst.key)})</i></p>
+          <table style="width:100%;border-collapse:collapse;font-size:10pt;">
+            <thead style="text-align:center">${head}</thead><tbody>${rows}</tbody>
+          </table>
+          <p style="font-size:10pt;margin-top:4px;"><i>Ghi chú: Họ tên, ngày sinh, CCCD và thu nhập lấy từ dữ liệu quyết toán thuế TNCN; tiền lương, phụ cấp, chức danh do đơn vị kê khai bổ sung khi làm việc.</i></p>
+        </div>` : '';
+      return list.length;
+    }
+
+    function printUnitMinutes(u) {
+      if (!u) { showToast('Chưa chọn đơn vị để in biên bản!', 'error'); return; }
+      fillMinutes(u);
       window.print();
     }
+
+    function downloadMinutesWord(u) {
+      if (!u) { showToast('Chưa chọn đơn vị!', 'error'); return; }
+      const n = fillMinutes(u);
+      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"><title>Biên bản làm việc</title>
+        <style>@page Section1{size:595.3pt 841.9pt;margin:42pt 34pt 42pt 56pt;} div.Section1{page:Section1;} p{margin:3pt 0;} body{font-family:'Times New Roman';font-size:13pt;}</style></head>
+        <body><div class="Section1">${$('minutes-doc').innerHTML}</div></body></html>`;
+      const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Bien_ban_lam_viec_${(u.mst.key || 'don_vi').replace(/[^0-9A-Za-z-]/g, '')}.doc`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      showToast(`Đã tải biên bản (Word)${n ? ' kèm Bảng 1 gồm ' + n + ' lao động' : ''}.`, 'success');
+    }
+
 
     // ------------------------------------------------------------ Đọc file & ghép cột
     const Import = { ctx: null };
@@ -2535,6 +2623,7 @@
       $('btn-save-unit-modal').addEventListener('click', saveUnitModal);
       $('m-unit-explanation-type').addEventListener('change', previewHintsInModal);
       $('btn-print-unit-minute').addEventListener('click', () => printUnitMinutes(State.result.units.find(x => x.id === State.selectedUnitId)));
+      $('btn-word-unit-minute').addEventListener('click', () => downloadMinutesWord(State.result.units.find(x => x.id === State.selectedUnitId)));
       $('btn-unit-view-qtt').addEventListener('click', () => {
         const u = State.result.units.find(x => x.id === State.selectedUnitId);
         closeUnitModal();
