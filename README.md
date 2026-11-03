@@ -129,3 +129,32 @@ gói trả phí hoặc trỏ vào database chung của BHXH PRO như trên.
 
 Đã xác nhận: nội dung chuyển khoản `+BHXH+103+00+<mã đơn vị>+09200+dong BHXH`
 — "103" và "00" cố định cho mọi đơn vị, chỉ thay phần mã đơn vị.
+
+## Công cụ: Rà soát dữ liệu tiềm năng (đơn vị & lao động)
+
+Tệp độc lập `tools/ra-soat-tiem-nang.html` — mở trực tiếp bằng trình duyệt (Chrome/Edge),
+không cần máy chủ. Toàn bộ dữ liệu chỉ xử lý và lưu trong trình duyệt trên máy đang dùng
+(IndexedDB), không gửi đi đâu. Cần mạng để tải thư viện giao diện/Excel từ CDN.
+
+- **4 nguồn dữ liệu:** CSDL đơn vị BHXH (EXPORTDMDONVI), DN mới / hộ kinh doanh (Sở TC, Thuế),
+  CSDL lao động BHXH (D02-TS/TST), lao động QTT Thuế TNCN.
+- **Màn hình ghép cột:** tự dò dòng tiêu đề (kể cả tiêu đề gộp 2 dòng, dòng đánh số),
+  chọn trang tính, tự đoán cột, xem trước dữ liệu đã chuẩn hóa, ghi nhớ cấu trúc cột.
+  Đọc .xlsx/.xls (cả .xls dạng HTML), .csv UTF-8/Windows-1258, tự chuyển font TCVN3.
+- **Chuẩn hóa:** bù số 0 đầu bị Excel làm mất (MST, CCCD, mã BHXH), MST chi nhánh 13 số,
+  MST hộ KD là số định danh 12 số, ngày sinh dạng số serial Excel.
+- **Đối soát đơn vị:** trùng MST → Đã tham gia (hoặc *Ngừng đóng* nếu trạng thái tạm dừng);
+  trùng MST mẹ/chi nhánh hoặc tên giống ≥ ngưỡng → *Nghi vấn* (không tự kết luận).
+- **Đối soát lao động:** Mã số BHXH → CCCD/CMND → Họ tên + năm sinh + đơn vị; phân loại
+  Chưa tham gia / Nghi vấn / Tham gia ở đơn vị khác / Đã báo giảm; cảnh báo đóng thấp hơn
+  thu nhập QTT theo ngưỡng cấu hình.
+- **Đơn vị đóng thiếu lao động:** so số LĐ trên QTT với số LĐ đang đóng theo MST.
+- **Cảnh báo giải trình** theo Luật BHXH 2024 (chủ hộ KD, người quản lý DN không hưởng lương)
+  và mâu thuẫn với dữ liệu QTT.
+- Nạp lại dữ liệu cập nhật theo khóa, không nhân đôi; kết quả xác minh thủ công được giữ nguyên.
+
+Phần lõi xử lý (thẻ `<script id="ra-soat-core">`) được kiểm thử tại `tests/raSoatCore.test.js`:
+
+```bash
+node --test tests/raSoatCore.test.js
+```
