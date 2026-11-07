@@ -1,3 +1,37 @@
 node_modules/
 .env
 *.log
+
+# --- Dữ liệu thật (bảo mật): KHÔNG được commit lên GitHub ---
+# File báo cáo C12 / Excel / dữ liệu đơn vị, văn bản, tài liệu chứa thông tin cơ quan
+*.xlsx
+*.xls
+*.xlsm
+*.xlsb
+*.csv
+*.tsv
+*.pdf
+*.doc
+*.docx
+*.zip
+*.rar
+*.7z
+*.sql.gz
+*.dump
+*.bak
+
+# Thư mục dùng để chứa dữ liệu thật khi làm việc local
+data/
+du-lieu/
+uploads/
+tmp/
+
+# Biến môi trường, khoá bí mật
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Ngoại lệ: file Excel mẫu rỗng (không chứa dữ liệu thật) nếu cần dùng cho test
+!tests/fixtures/*.xlsx
